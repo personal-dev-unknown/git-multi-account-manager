@@ -1,0 +1,25 @@
+[package]
+name        = "gm_domain"
+version     = "0.1.0"
+edition     = "2021"
+description = "Pure domain business logic — zero infrastructure dependencies"
+
+# ── Dependency discipline ──────────────────────────────────────────────────────
+# This crate may ONLY depend on gm_shared and pure-data external crates.
+# The Rust compiler enforces this: if a forbidden crate is added here, any
+# attempt to call its APIs produces a compile error immediately.
+#
+# ALLOWED: gm_shared, serde (trait derivation only), uuid, chrono, async-trait
+# FORBIDDEN: sqlx, reqwest, tokio, ring, libloading, axum, tauri, any I/O crate
+#
+# If you need to add a crate and are unsure, ask: "does this crate touch
+# a database, network, filesystem, or SSH?" If yes, it belongs in gm_adapters
+# or gm_kernel, not here.
+
+[dependencies]
+gm_shared    = { path = "../gm_shared" }
+serde        = { workspace = true }
+serde_json   = { workspace = true }
+uuid         = { workspace = true }
+chrono       = { workspace = true }
+async-trait  = { workspace = true }

@@ -1,0 +1,23 @@
+[package]
+name        = "gm_plugin_github"
+version     = "0.1.0"
+edition     = "2021"
+description = "GitHub provider plugin: RepositoryProvider + AuthProvider"
+
+# Plugins import gm_ports (the traits they implement) and gm_kernel (the
+# contracts and service registry). They MUST NOT import gm_adapters to preserve
+# the dependency direction: Plugins → Kernel → Ports → Domain → Shared.
+
+[dependencies]
+gm_shared   = { path = "../gm_shared" }
+gm_ports    = { path = "../gm_ports" }
+gm_kernel   = { path = "../gm_kernel" }
+
+reqwest     = { workspace = true }
+tokio       = { workspace = true }
+async-trait = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+uuid        = { workspace = true }
+chrono      = { workspace = true }
+tracing     = { workspace = true }

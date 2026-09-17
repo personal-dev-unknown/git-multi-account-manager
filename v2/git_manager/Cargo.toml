@@ -1,0 +1,156 @@
+# ============================================================
+# Git Multi-Account Manager — Cargo Workspace Manifest
+#
+# This is NOT a crate — it is a workspace root that coordinates
+# all member crates. The [workspace.dependencies] table pins
+# every shared dependency version exactly once so that all crates
+# use identical versions, preventing diamond dependency conflicts
+# and ensuring reproducible builds across machines.
+#
+# Architecture: Microkernel + Hexagonal Core
+# Stack: Rust (core) + Zig (native OS layer) + TypeScript/Svelte (frontend)
+# ============================================================
+
+[workspace]
+resolver = "2"
+members = [
+    # ── Foundation ──────────────────────────────────────────
+    "crates/gm_shared",
+
+    # ── Core Layers (build order matters for dependency checking) ──
+    "crates/gm_domain",
+    "crates/gm_ports",
+    "crates/gm_kernel",
+    "crates/gm_adapters",
+
+    # ── Provider Plugins ────────────────────────────────────
+    "crates/gm_plugin_github",
+    "crates/gm_plugin_gitlab",
+    "crates/gm_plugin_bitbucket",
+    "crates/gm_plugin_azure_devops",
+    "crates/gm_plugin_sourceforge",
+    "crates/gm_plugin_custom",
+    "crates/gm_plugin_cloud_storage",
+    "crates/gm_plugin_local_path",
+
+    # ── Interface Plugins ────────────────────────────────────
+    "crates/gm_interface_cli",
+    "crates/gm_interface_web",
+    "crates/gm_interface_desktop",
+
+    # ── Binary Launchers ─────────────────────────────────────
+    "apps/cli",
+    "apps/web",
+    "apps/desktop",
+]
+
+# ── Shared dependency versions ───────────────────────────────
+# Every crate declares: some_dep = { workspace = true }
+# This single table is the source of truth for all versions.
+[workspace.dependencies]
+
+# Async runtime — Tokio is the only async runtime used. All crates
+# that need async use this. The "full" feature set is used for
+# binaries; individual crates specify only what they need.
+tokio        = { version = "1.36",  features = ["full"] }
+
+
+# .env file loading
+dotenvy = { version = "0.15" }
+
+# Serialization — serde + serde_json are used everywhere DTOs
+# cross crate boundaries. The "derive" feature gives us
+# #[derive(Serialize, Deserialize)] without boilerplate.
+serde        = { version = "1",     features = ["derive"] }
+serde_json   = { version = "1.0.117" }
+
+# Identity — UUIDs are used for all entity primary keys.
+# v4 = random generation, serde = JSON serialization support.
+uuid         = { version = "1",     features = ["v4", "serde"] }
+
+# Time — chrono is used for all timestamps in entities and events.
+chrono       = { version = "0.4",   features = ["serde"] }
+
+# Error handling — thiserror generates std::error::Error implementations
+# from enum variants automatically, removing error boilerplate entirely.
+thiserror    = { version = "2.0.18" }
+
+# Async traits — enables `async fn` in trait definitions that can be
+# used as trait objects (Box<dyn Trait>, Arc<dyn Trait>). This is
+# required until Rust stabilizes dyn-compatible async traits fully.
+async-trait  = { version = "0.1" }
+
+# Structured tracing — the observability backbone. tracing provides
+# spans, events, and subscriber hooks. tracing-subscriber provides
+# the actual output formatters (JSON for production, pretty for dev).
+tracing              = { version = "0.1" }
+tracing-subscriber   = { version = "0.3", features = ["env-filter", "json"] }
+
+# Database — SQLx with compile-time query verification. The macros
+# feature enables sqlx::query! which checks SQL against the schema
+# at compile time. offline feature supports CI builds without a DB.
+sqlx = { version = "0.8.6", features = ["mysql", "sqlite", "runtime-tokio", "macros", "uuid", "chrono", "migrate"] }
+
+# HTTP client — reqwest is used by provider plugins (GitHub, GitLab, etc.)
+# to call platform REST APIs. rustls-tls avoids OpenSSL dependency.
+reqwest = { version = "0.13.1", features = ["json", "rustls"] }
+
+# Concurrent data structures — DashMap gives us concurrent HashMap
+# access without a global Mutex. Used in the service registry and
+# event bus where multiple async tasks read/write simultaneously.
+dashmap = { version = "6.1.0" }
+
+# Type-erased container — anymap2 provides TypeId → Arc<dyn Any>
+# storage, used in the service registry for type-safe DI.
+anymap2 = { version = "0.13" }
+
+# Dynamic plugin loading — libloading loads .so/.dylib plugin files
+# at runtime. Used by the kernel's plugin loader.
+libloading = { version = "0.9" }
+
+# Cryptography — ring provides AES-256-GCM for the credential vault.
+# Chosen over RustCrypto because ring is audited and widely used in
+# production security systems.
+ring = { version = "0.17" }
+hex  = { version = "0.4" }
+
+# Home directory lookup — cross-platform home_dir() used in SSH key generation.
+dirs-next    = { version = "2" }
+
+# Memory-zeroing for secrets — prevents credential plaintext from persisting
+# in process memory after use. Integrated in the credential vault.
+zeroize = { version = "1.8", features = ["zeroize_derive"] }
+
+# ── CLI-specific ──────────────────────────────────────────────
+clap         = { version = "4",    features = ["derive", "color", "help", "wrap_help"] }
+ratatui      = { version = "0.30" }
+crossterm    = { version = "0.29" }
+indicatif    = { version = "0.18.4" }
+dialoguer    = { version = "0.12" }
+tabled       = { version = "0.20" }
+owo-colors   = { version = "4.3.0" }
+terminal_size = { version = "0.4.4" }
+atty         = { version = "0.2" }
+
+# ── Web-specific ──────────────────────────────────────────────
+axum         = { version = "0.8.9", features = ["macros"] }
+axum-extra   = { version = "0.12.6",  features = ["cookie"] }
+tower        = { version = "0.5.3" }
+tower-http   = { version = "0.6.10", features = ["cors", "compression-gzip", "trace"] }
+askama       = { version = "0.16", features = ["derive"] }
+include_dir  = { version = "0.7" }
+tokio-stream = { version = "0.1", features = ["sync"] }
+askama_escape = { version = "0.16" }
+urlencoding = { version = "2" }
+
+# ── Desktop-specific ──────────────────────────────────────────
+tauri        = { version = "2.11.1", features = ["wry", "custom-protocol"] }
+tauri-build  = { version = "2.6.1" }
+
+
+
+# ── Workspace-level metadata ───────────────────────────────────
+[workspace.metadata.deb]
+section    = "utils"
+depends    = "libsecret-1-0, openssh-client, git"
+maintainer = "Git Manager Developers <dev@gitmanager.dev>"

@@ -1,0 +1,43 @@
+[package]
+name        = "gm_kernel"
+version     = "0.1.0"
+edition     = "2021"
+description = "Microkernel runtime: command bus, event bus, plugin system, workflow engine, credential vault"
+
+# gm_kernel sits at the top of the internal dependency graph.
+# It imports gm_shared (primitives), gm_domain (business logic), and gm_ports (contracts).
+# NOTHING imports gm_kernel except the binary entry-points (apps/*) and interface plugins.
+# Any circular dependency here is an architectural violation.
+
+[dependencies]
+gm_shared    = { path = "../gm_shared" }
+gm_domain    = { path = "../gm_domain" }
+gm_ports     = { path = "../gm_ports" }
+
+tokio             = { workspace = true }
+async-trait       = { workspace = true }
+tracing           = { workspace = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+dashmap           = { workspace = true }
+serde             = { workspace = true }
+serde_json        = { workspace = true }
+uuid              = { workspace = true }
+chrono            = { workspace = true }
+
+# Dynamic plugin loading — .so files on Linux, .dylib on macOS
+libloading = { workspace = true }
+
+# AES-256-GCM for the credential vault
+ring = { workspace = true }
+
+# Hex encoding for ciphertext and IV storage in the database
+hex = { workspace = true }
+
+# .env file loading
+dotenvy = { workspace = true }
+
+# Cross-platform home directory resolution
+dirs-next = { workspace = true }
+
+# Memoryzeroing for secrets
+zeroize = { version = "1.8", features = ["zeroize_derive"] }

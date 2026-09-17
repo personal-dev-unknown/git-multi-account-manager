@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Test SSH Connection{% endblock %}
+
+{% block topbar_left %}
+<nav class="breadcrumb">
+  <a href="/">Home</a><span class="breadcrumb-sep">/</span>
+  <a href="/ssh">SSH Keys</a><span class="breadcrumb-sep">/</span>
+  <span class="breadcrumb-current">Test Connection</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Test SSH Connection</h1>
+    <p class="page-subtitle">Verify that an account's active SSH key is accepted by the hosting platform</p>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="card card--elevated" style="max-width:var(--content-narrow);">
+    <div class="card-body">
+
+      <!-- Test result (shown after POST) -->
+      {% if test_result %}
+        {% if test_result.success %}
+        <div class="alert alert--success mb-5" role="status">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/>
+          </svg>
+          <div class="alert-body">
+            <p class="alert-title">Connection successful</p>
+            {% if test_result.username %}
+            Authenticated as <strong>{{ test_result.username }}</strong> on {{ account.platform_name | default(value="the platform") }}.
+            {% else %}
+            The platform accepted the SSH key.
+            {% endif %}
+          </div>
+        </div>
+        {% else %}
+        <div class="alert alert--error mb-5" role="alert">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>
+          </svg>
+          <div class="alert-body">
+            <p class="alert-title">Connection failed</p>
+            {{ test_result.error | default(value="The platform rejected the SSH key or the connection timed out.") }}
+          </div>
+        </div>
+
+        <div class="alert alert--info mb-5">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          <div class="alert-body">
+            <p class="alert-title">Troubleshooting steps</p>
+            <ul style="list-style:disc;padding-left:var(--space-5);margin-top:var(--space-2);line-height:var(--leading-relaxed);">
+              <li>Make sure you added the public key to <a href="/accounts/{{ account.uuid }}">{{ account.alias }}'s</a> platform account.</li>
+              <li>If you just added the key, wait a few seconds and try again.</li>
+              <li>Check that the SSH agent has the key: run <code>ssh-add -l</code> in your terminal.</li>
+              <li>Try regenerating the key and adding the new public key to the platform.</li>
+            </ul>
+          </div>
+        </div>
+        {% endif %}
+      {% endif %}
+
+      <!-- Test form -->
+      <form method="POST" action="/ssh/test">
+        <div class="form-group">
+          <label class="form-label" for="account_uuid">Account to Test</label>
+          <select id="account_uuid" name="account_uuid" class="select" required>
+            <option value="">— Select account —</option>
+            {% for acc in accounts %}
+            <option value="{{ acc.uuid }}"
+                    {% if (form.account_uuid == acc.uuid) or (not form.account_uuid and loop.first) %}selected{% endif %}>
+              {{ acc.alias }} — {{ acc.platform_name | default(value="unknown") }}
+              {% if acc.has_active_ssh_key %}(key ready){% else %}(no key — generate one first){% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="timeout_ms">Timeout</label>
+          <select id="timeout_ms" name="timeout_ms" class="select">
+            <option value="5000">5 seconds</option>
+            <option value="10000" selected>10 seconds</option>
+            <option value="30000">30 seconds</option>
+          </select>
+        </div>
+
+        <div class="flex gap-3 justify-end">
+          <a href="/ssh" class="btn btn--secondary">Cancel</a>
+          <button type="submit" class="btn btn--primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Test Connection
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <div class="alert alert--info mt-5" style="max-width:var(--content-narrow);">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    <div class="alert-body">
+      This test runs <code>ssh -T</code> to the platform's SSH endpoint using the account's active private key.
+      The platform responds with the authenticated username (e.g. "Hi shakamoses!").
+      A success means git operations (clone, pull, push) will work with this account.
+    </div>
+  </div>
+</div>
+{% endblock %}

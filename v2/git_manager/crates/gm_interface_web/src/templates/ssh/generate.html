@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Generate SSH Key{% endblock %}
+
+{% block topbar_left %}
+<nav class="breadcrumb">
+  <a href="/">Home</a><span class="breadcrumb-sep">/</span>
+  <a href="/ssh">SSH Keys</a><span class="breadcrumb-sep">/</span>
+  <span class="breadcrumb-current">Generate Key</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Generate SSH Key</h1>
+    <p class="page-subtitle">Creates an Ed25519 or RSA key pair and adds a Host block to ~/.ssh/config</p>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="card card--elevated" style="max-width:var(--content-narrow);">
+    <div class="card-body">
+
+      {% if error %}
+      <div class="alert alert--error mb-4" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+        <div class="alert-body">{{ error }}</div>
+      </div>
+      {% endif %}
+
+      {% if generated_key %}
+      <!-- Success: show public key to copy -->
+      <div class="alert alert--success mb-4" role="status">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/>
+        </svg>
+        <div class="alert-body">
+          <p class="alert-title">Key generated successfully</p>
+          Add the public key below to your {{ account.platform_name | default(value="platform") }} account,
+          then test the connection to verify.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Public Key — Copy this to your platform</label>
+        <div class="pub-key-block" id="pub-key">{{ generated_key.public_key }}</div>
+        <div class="flex gap-2 mt-2">
+          <button class="btn btn--secondary btn--sm" onclick="copyKey()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy Public Key
+          </button>
+          <a href="/ssh/test?account={{ account.uuid }}" class="btn btn--primary btn--sm">
+            Test Connection →
+          </a>
+        </div>
+      </div>
+
+      {% if platform_link %}
+      <div class="alert alert--info mt-4">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <div class="alert-body">
+          <p class="alert-title">Where to add the key</p>
+          Go to <a href="{{ platform_link }}" target="_blank" rel="noopener noreferrer">{{ account.platform_name | default(value="your platform") }} → SSH Keys</a>
+          and paste the public key above.
+        </div>
+      </div>
+      {% endif %}
+
+      {% else %}
+      <!-- Generation form -->
+      <form method="POST" action="/ssh/generate" novalidate>
+        <input type="hidden" name="account_uuid" value="{{ form.account_uuid | default(value='') }}">
+
+        <div class="form-group">
+          <label class="form-label" for="account_select">Account</label>
+          <select id="account_select" name="account_uuid" class="select" required>
+            <option value="">— Select account —</option>
+            {% for acc in accounts %}
+            <option value="{{ acc.uuid }}"
+                    {% if form.account_uuid == acc.uuid or (not form.account_uuid and loop.first) %}selected{% endif %}>
+              {{ acc.alias }} ({{ acc.platform_name | default(value="unknown") }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="key_type">Key Type</label>
+          <select id="key_type" name="key_type" class="select">
+            <option value="ed25519" {% if not form.key_type or form.key_type == "ed25519" %}selected{% endif %}>
+              Ed25519 — recommended (small, fast, modern)
+            </option>
+            <option value="rsa" {% if form.key_type == "rsa" %}selected{% endif %}>
+              RSA 4096 — for legacy systems
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="passphrase">Passphrase (optional)</label>
+          <input type="password" id="passphrase" name="passphrase" class="input"
+                 placeholder="Leave blank for passwordless operation"
+                 autocomplete="new-password">
+          <p class="form-hint">If set, you must enter it when adding the key to the SSH agent.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="flex items-center gap-2 text-sm" style="cursor:pointer;">
+            <input type="checkbox" name="add_to_agent" value="1"
+                   {% if not form.add_to_agent or form.add_to_agent %}checked{% endif %} />
+            Add key to SSH agent automatically after generation
+          </label>
+        </div>
+
+        <div class="flex justify-end gap-3">
+          <a href="/ssh" class="btn btn--secondary">Cancel</a>
+          <button type="submit" class="btn btn--primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777z"/>
+            </svg>
+            Generate Key Pair
+          </button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Info card -->
+  <div class="card mt-5" style="max-width:var(--content-narrow);">
+    <div class="card-header"><span class="card-title">How SSH key isolation works</span></div>
+    <div class="card-body">
+      <p class="text-sm" style="line-height:var(--leading-relaxed);">
+        Git Manager generates a unique key pair for each account and writes a dedicated
+        <code>Host</code> block to <code>~/.ssh/config</code>. When you clone a repository
+        with <code>git@github.com-work:owner/repo.git</code>, SSH reads the config and
+        automatically selects the correct private key — no ssh-agent juggling required.
+      </p>
+      <div class="code-block mt-4">
+        <pre><code>Host github.com-work
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519_github_work
+  IdentitiesOnly yes
+  Port 22</code></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+function copyKey() {
+  var text = document.getElementById('pub-key').textContent.trim();
+  navigator.clipboard.writeText(text).then(function() {
+    var btn = event.currentTarget;
+    var orig = btn.innerHTML;
+    btn.textContent = '✓ Copied!';
+    setTimeout(function() { btn.innerHTML = orig; }, 2000);
+  });
+}
+</script>
+{% endblock %}
+{% endblock %}

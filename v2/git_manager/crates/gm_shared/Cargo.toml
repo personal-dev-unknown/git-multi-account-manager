@@ -1,0 +1,32 @@
+[package]
+name        = "gm_shared"
+version     = "0.1.0"
+edition     = "2021"
+description = "Shared types, errors, constants, validation, and utilities for Git Manager"
+
+# ── Dependency discipline ──────────────────────────────────────────────────────
+# gm_shared is the bottom of the dependency graph. It must NEVER depend on:
+#   - sqlx, reqwest, tokio, ring, libloading  (infrastructure)
+#   - gm_domain, gm_ports, gm_kernel         (other workspace crates)
+#   - any crate that touches the filesystem, network, or OS APIs
+#
+# If you need to add a dependency here, ask: "could this break on a machine
+# with no database, no network, and no SSH agent?" If yes, it does not belong
+# in gm_shared. It belongs in an adapter or the kernel.
+#
+# The only allowed dependencies are pure data/type libraries:
+#   serde     — serialization framework (no I/O, just trait derivation)
+#   uuid      — UUID type (no I/O, just a 128-bit value with helpers)
+#   chrono    — datetime types (no I/O, just time arithmetic)
+#   thiserror — error type derivation macro (no I/O, compile-time only)
+
+[dependencies]
+serde      = { workspace = true }
+serde_json = { workspace = true }
+uuid       = { workspace = true }
+chrono     = { workspace = true }
+thiserror  = { workspace = true }
+
+[dev-dependencies]
+# serde_json is needed in tests to verify round-trip serialization of DTOs
+serde_json = { workspace = true }

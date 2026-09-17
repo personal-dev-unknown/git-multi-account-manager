@@ -1,0 +1,13 @@
+# Git Manager Clippy Configuration
+
+cognitive-complexity-threshold = 30
+too-many-lines-threshold = 100
+too-many-arguments-threshold = 8
+
+# Instrumentation for tracking async future sizes
+future-size-threshold = 16384
+
+# Allow unwrap in tests where panicking is the desired behavior
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-indexing-slicing-in-tests = true

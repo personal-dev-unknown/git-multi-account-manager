@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Add Account{% endblock %}
+
+{% block topbar_left %}
+<nav class="breadcrumb">
+  <a href="/">Home</a>
+  <span class="breadcrumb-sep">/</span>
+  <a href="/accounts">Accounts</a>
+  <span class="breadcrumb-sep">/</span>
+  <span class="breadcrumb-current">Add Account</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Add Account</h1>
+    <p class="page-subtitle">Connect a Git hosting account. Each account gets an isolated SSH key.</p>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="card card--elevated" style="max-width: var(--content-narrow);">
+    <div class="card-body">
+
+      {% if error %}
+      <div class="alert alert--error mb-4" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+        <div class="alert-body">{{ error }}</div>
+      </div>
+      {% endif %}
+
+      <form method="POST" action="/accounts" novalidate>
+        <!-- Platform selection -->
+        <div class="form-group">
+          <label class="form-label" for="platform_id">Git Hosting Platform <span aria-hidden="true" style="color:var(--color-error)">*</span></label>
+          <select id="platform_id" name="platform_id" class="select" required aria-describedby="platform-hint">
+            <option value="">— Choose a platform —</option>
+            <option value="00000000-0001-0000-0000-000000000001" {% if form.platform_id == "00000000-0001-0000-0000-000000000001" %}selected{% endif %}>
+              GitHub (github.com)
+            </option>
+            <option value="00000000-0002-0000-0000-000000000001" {% if form.platform_id == "00000000-0002-0000-0000-000000000001" %}selected{% endif %}>
+              GitLab (gitlab.com)
+            </option>
+            <option value="00000000-0003-0000-0000-000000000001" {% if form.platform_id == "00000000-0003-0000-0000-000000000001" %}selected{% endif %}>
+              Bitbucket (bitbucket.org)
+            </option>
+            <option value="00000000-0004-0000-0000-000000000001" {% if form.platform_id == "00000000-0004-0000-0000-000000000001" %}selected{% endif %}>
+              Azure DevOps (dev.azure.com)
+            </option>
+          </select>
+          <p id="platform-hint" class="form-hint">Select the Git hosting service for this account.</p>
+        </div>
+
+        <!-- Alias -->
+        <div class="form-group">
+          <label class="form-label" for="alias">Account Alias <span aria-hidden="true" style="color:var(--color-error)">*</span></label>
+          <input type="text" id="alias" name="alias" class="input"
+                 value="{{ form.alias | default(value='') }}"
+                 placeholder="e.g. work, personal, client-acme"
+                 pattern="[a-z0-9][a-z0-9\-]{0,38}"
+                 required maxlength="39"
+                 aria-describedby="alias-hint">
+          <p id="alias-hint" class="form-hint">Lowercase letters, numbers, and hyphens. Used in SSH key names and git config.</p>
+        </div>
+
+        <!-- Username -->
+        <div class="form-group">
+          <label class="form-label" for="username">Git Username <span aria-hidden="true" style="color:var(--color-error)">*</span></label>
+          <input type="text" id="username" name="username" class="input"
+                 value="{{ form.username | default(value='') }}"
+                 placeholder="e.g. shakamoses"
+                 required maxlength="100"
+                 aria-describedby="username-hint">
+          <p id="username-hint" class="form-hint">Your username on the hosting platform (used for git config and SSH key comments).</p>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address <span aria-hidden="true" style="color:var(--color-error)">*</span></label>
+          <input type="email" id="email" name="email" class="input"
+                 value="{{ form.email | default(value='') }}"
+                 placeholder="you@example.com"
+                 required maxlength="254"
+                 aria-describedby="email-hint">
+          <p id="email-hint" class="form-hint">Used as the SSH key comment and git commit author email.</p>
+        </div>
+
+        <!-- Auth method -->
+        <div class="form-group">
+          <label class="form-label" for="auth_method">Authentication Method <span aria-hidden="true" style="color:var(--color-error)">*</span></label>
+          <select id="auth_method" name="auth_method" class="select" required>
+            <option value="ssh" {% if form.auth_method == "ssh" or not form.auth_method %}selected{% endif %}>
+              SSH Key (recommended)
+            </option>
+            <option value="https_pat" {% if form.auth_method == "https_pat" %}selected{% endif %}>
+              Personal Access Token (PAT)
+            </option>
+          </select>
+          <p class="form-hint">SSH key gives the best isolation. PAT is used for API access (repository listing).</p>
+        </div>
+
+        <!-- PAT field (shown when https_pat is selected) -->
+        <div class="form-group" id="pat-group" style="display:none">
+          <label class="form-label" for="pat">Personal Access Token</label>
+          <input type="password" id="pat" name="pat" class="input input--mono"
+                 placeholder="ghp_... / glpat-... / org:..."
+                 autocomplete="new-password"
+                 aria-describedby="pat-hint">
+          <p id="pat-hint" class="form-hint">
+            Required scopes: <strong>repo</strong> (GitHub), <strong>read_api+read_repository</strong> (GitLab),
+            <strong>Account:Read+Repositories:Read</strong> (Bitbucket format: <code>username:app_password</code>),
+            or <strong>organization:pat</strong> (Azure DevOps).
+          </p>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+          <a href="/accounts" class="btn btn--secondary">Cancel</a>
+          <button type="submit" class="btn btn--primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Add Account
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- SSH key next steps info -->
+  <div class="alert alert--info mt-6" style="max-width: var(--content-narrow);">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    <div class="alert-body">
+      <p class="alert-title">Next: Generate an SSH Key</p>
+      After adding the account, go to <strong>SSH Keys</strong> to generate a key pair.
+      You'll then add the public key to your hosting account and test the connection.
+    </div>
+  </div>
+</div>
+
+<script>
+  // Show/hide PAT field based on auth method selection
+  var authSelect = document.getElementById('auth_method');
+  var patGroup   = document.getElementById('pat-group');
+
+  function updatePatVisibility() {
+    patGroup.style.display = authSelect.value === 'https_pat' ? 'flex' : 'none';
+    document.getElementById('pat').required = authSelect.value === 'https_pat';
+  }
+
+  authSelect.addEventListener('change', updatePatVisibility);
+  updatePatVisibility();
+</script>
+{% endblock %}

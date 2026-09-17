@@ -1,0 +1,42 @@
+name: git-manager
+version: '1.0.0'
+summary: Multi-account Git manager
+description: |
+  Manage multiple GitHub, GitLab, Bitbucket, and Azure DevOps accounts from a
+  single CLI, web, or desktop interface with automatic SSH key management.
+grade: stable
+confinement: strict
+base: core22
+
+parts:
+  zig-native:
+    plugin: nil
+    source: .
+    build-packages: [zig]
+    override-build: |
+      cd zig_native && zig build -Doptimize=ReleaseSafe
+      mkdir -p $SNAPCRAFT_PART_INSTALL/lib
+      cp zig-out/lib/libgm_native.a $SNAPCRAFT_PART_INSTALL/lib/
+
+  git-manager-rust:
+    plugin: rust
+    source: .
+    rust-channel: stable
+    after: [zig-native]
+    build-packages: [libsecret-1-dev, pkg-config]
+    stage-packages: [libsecret-1-0, git, openssh-client]
+    override-build: |
+      cargo build --release -p git-manager -p git-manager-web
+      install -D target/release/git-manager     $SNAPCRAFT_PART_INSTALL/bin/git-manager
+      install -D target/release/git-manager-web $SNAPCRAFT_PART_INSTALL/bin/git-manager-web
+
+apps:
+  git-manager:
+    command: bin/git-manager
+    plugs: [home, network, ssh-keys, desktop]
+
+  git-manager-web:
+    command: bin/git-manager-web
+    daemon: simple
+    restart-condition: on-failure
+    plugs: [home, network]

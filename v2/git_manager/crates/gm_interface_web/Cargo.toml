@@ -1,0 +1,43 @@
+[package]
+name        = "gm_interface_web"
+version     = "0.1.0"
+edition     = "2021"
+description = "Web interface plugin — Axum HTTP server + SSE + Askama templates"
+
+# The web interface sits at the top of the dependency stack, the same as the
+# CLI. It imports gm_kernel (for Kernel, InterfacePlugin), gm_ports (for
+# inbound command types), and gm_shared (for DTOs and errors).
+# It does NOT import gm_adapters — concrete services are injected at runtime.
+
+[dependencies]
+gm_shared   = { path = "../gm_shared" }
+gm_ports    = { path = "../gm_ports" }
+gm_kernel   = { path = "../gm_kernel" }
+
+# Async runtime
+tokio       = { workspace = true }
+async-trait = { workspace = true }
+tracing     = { workspace = true }
+
+# Web framework — Axum integrates natively with Tower middleware and tokio.
+# It pairs naturally with the kernel's async services.
+axum        = { workspace = true }
+tower       = { workspace = true }
+tower-http  = { workspace = true }
+
+# HTML templating via Askama (compile-time verified Jinja-style templates)
+askama      = { workspace = true }
+askama_escape = { workspace = true }
+
+# Server-Sent Events helper
+tokio-stream = { workspace = true }
+
+# Session management
+axum-extra  = { workspace = true }
+
+# Serialisation
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+uuid        = { workspace = true }
+chrono      = { workspace = true }
+urlencoding = { workspace = true}

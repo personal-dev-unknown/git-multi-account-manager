@@ -1,0 +1,25 @@
+# Environment
+.env
+
+# Build artifacts
+target/
+zig-out/
+zig-cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary
+*.tmp
+temp/

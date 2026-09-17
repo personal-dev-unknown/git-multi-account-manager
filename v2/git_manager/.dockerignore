@@ -1,0 +1,35 @@
+# Git
+.git/
+.gitignore
+
+# Build artifacts
+target/
+.zig-cache/
+zig_native/zig-out/
+
+# Environment
+.env
+.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (not needed at runtime)
+docs/
+ARCHITECTURE_GAP_ANALYSIS.md
+SYSTEM_GUIDE.md
+
+# Infrastructure for host deployment (not needed in Docker)
+infrastructure/deb/
+infrastructure/rpm/
+infrastructure/snap/
+
+# Test directory (not needed in production Docker build)
+tests/

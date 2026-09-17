@@ -1,0 +1,46 @@
+[package]
+name        = "gm_adapters"
+version     = "0.1.0"
+edition     = "2021"
+build       = "build.rs"
+description = "Infrastructure adapters: Zig FFI bridges, SQLx repositories, event store"
+
+# gm_adapters is where the two dependency arrows converge:
+#   - It depends inward on gm_domain (implements domain ports)
+#   - It links outward to libgm_native.a (the Zig native layer)
+#   - It connects downward to MySQL/SQLite via SQLx
+#
+# NOTHING inside gm_domain or gm_kernel may import from gm_adapters.
+# The dependency flow is strictly:
+#   gm_adapters → gm_kernel → gm_ports → gm_domain → gm_shared
+
+[dependencies]
+gm_shared   = { path = "../gm_shared" }
+gm_domain   = { path = "../gm_domain" }
+gm_ports    = { path = "../gm_ports" }
+gm_kernel   = { path = "../gm_kernel" }
+
+# Async runtime — needed for async trait impls in the repository adapters
+tokio       = { workspace = true }
+async-trait = { workspace = true }
+
+# Structured logging — adapters propagate traces from the kernel
+tracing             = { workspace = true }
+tracing-subscriber  = { workspace = true }
+
+# Concurrent data structures
+dashmap     = { workspace = true }
+
+# Serialisation — used for JSON columns and event payloads
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+
+# Identifier and time types matching the domain entities
+uuid        = { workspace = true }
+chrono      = { workspace = true }
+
+# Compile-time verified SQL queries for MySQL (production) and SQLite (dev/test)
+sqlx        = { workspace = true }
+
+# For the hex-encoded column values (encrypted credentials)
+hex         = { workspace = true }

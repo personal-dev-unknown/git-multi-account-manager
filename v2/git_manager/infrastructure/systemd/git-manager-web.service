@@ -1,0 +1,39 @@
+# Git Multi-Account Manager — Web Interface systemd Unit
+# Install: sudo cp git-manager-web.service /etc/systemd/system/
+# Enable:  sudo systemctl enable git-manager-web
+# Start:   sudo systemctl start git-manager-web
+
+[Unit]
+Description=Git Multi-Account Manager — Web Interface
+Documentation=https://github.com/zanabuni/git-multi-account-manager
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=git-manager
+Group=git-manager
+ExecStart=/usr/bin/git-manager-web
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectHome=read-only
+ProtectSystem=strict
+ReadWritePaths=/var/lib/git-manager /home
+CapabilityBoundingSet=
+PrivateTmp=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+
+Environment="GIT_MANAGER_WEB_ADDR=127.0.0.1:5000"
+Environment="RUST_LOG=info"
+# Set GIT_MANAGER_DB_URL in /etc/git-manager/environment
+EnvironmentFile=-/etc/git-manager/environment
+
+[Install]
+WantedBy=multi-user.target

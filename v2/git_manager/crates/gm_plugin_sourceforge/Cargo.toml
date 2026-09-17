@@ -1,0 +1,19 @@
+[package]
+name        = "gm_plugin_sourceforge"
+version     = "0.1.0"
+edition     = "2021"
+description = "SourceForge provider plugin: RepositoryProvider + AuthProvider"
+
+[dependencies]
+gm_shared   = { path = "../gm_shared" }
+gm_ports    = { path = "../gm_ports" }
+gm_kernel   = { path = "../gm_kernel" }
+
+reqwest     = { workspace = true }
+tokio       = { workspace = true }
+async-trait = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+uuid        = { workspace = true }
+chrono      = { workspace = true }
+tracing     = { workspace = true }

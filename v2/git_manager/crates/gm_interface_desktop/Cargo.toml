@@ -1,0 +1,25 @@
+[package]
+name        = "gm_interface_desktop"
+version     = "0.1.0"
+edition     = "2021"
+description = "Git Multi-Account Manager — Tauri desktop interface plugin"
+
+[lib]
+name = "gm_interface_desktop"
+crate-type = ["cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { workspace = true }
+
+[dependencies]
+gm_kernel    = { path = "../gm_kernel" }
+gm_ports     = { path = "../gm_ports" }
+gm_shared    = { path = "../gm_shared" }
+tauri        = { workspace = true }
+tokio        = { workspace = true }
+async-trait  = { workspace = true }
+serde        = { workspace = true, features = ["derive"] }
+serde_json   = { workspace = true }
+uuid         = { workspace = true }
+tracing      = { workspace = true }
+dirs-next    = "2"

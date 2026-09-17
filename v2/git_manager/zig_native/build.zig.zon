@@ -1,0 +1,24 @@
+.{
+    // Package metadata for the Zig native layer.
+    // The .name and .version are used when this package is referenced
+    // as a dependency from the root build.zig.
+    .name = .gm_native,
+    .version = "0.1.0",
+    .fingerprint = 0x313268e30a390af6,
+
+    // Zig does not yet have a centralized package registry like crates.io.
+    // All external dependencies must be declared here with their exact
+    // content hash so builds are reproducible. Currently gm_native has
+    // no external Zig dependencies — everything is done via the standard
+    // library and system library bindings (libsecret, Security.framework).
+    .dependencies = .{},
+
+    // Paths included when this package is used as a dependency.
+    // Only the src/ directory and build files are needed; include/ is
+    // generated output and should not be distributed as source.
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src/",
+    },
+}

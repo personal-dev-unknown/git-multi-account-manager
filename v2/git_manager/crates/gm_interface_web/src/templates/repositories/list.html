@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Repositories{% endblock %}
+
+{% block topbar_left %}
+<nav class="breadcrumb">
+  <a href="/">Home</a><span class="breadcrumb-sep">/</span>
+  <span class="breadcrumb-current">Repositories</span>
+</nav>
+{% endblock %}
+
+{% block topbar_right %}
+<a href="/repositories/clone" class="btn btn--secondary btn--sm">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+    <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+  Clone Repository
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Repositories</h1>
+    <p class="page-subtitle">
+      {% if cloned_count is defined %}
+        {{ cloned_count }} cloned locally
+        {% if remote_count is defined and remote_count > 0 %} · {{ remote_count }} remote only{% endif %}
+      {% else %}
+        All repositories known to Git Manager
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+<div class="page-body">
+
+  <!-- Account filter tabs -->
+  {% if accounts and accounts | length > 1 %}
+  <div class="flex gap-2 flex-wrap mb-5" role="tablist" aria-label="Filter by account">
+    <a href="/repositories" role="tab"
+       class="btn btn--sm {% if not filter_account %}btn--primary{% else %}btn--secondary{% endif %}"
+       aria-selected="{{ not filter_account }}">All Accounts</a>
+    {% for acc in accounts %}
+    <a href="/repositories?account={{ acc.uuid }}" role="tab"
+       class="btn btn--sm {% if filter_account == acc.uuid %}btn--primary{% else %}btn--secondary{% endif %}"
+       aria-selected="{{ filter_account == acc.uuid }}">
+      {{ acc.alias }}
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if repositories and repositories | length > 0 %}
+
+  <!-- Cloned repos section -->
+  {% set cloned = repositories | selectattr("is_cloned") | list %}
+  {% if cloned | length > 0 %}
+  <h2 class="sidebar-section-title" style="margin-bottom:var(--space-3);font-size:var(--text-xs)">
+    Cloned Locally ({{ cloned | length }})
+  </h2>
+  <div class="card mb-6">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Repository</th>
+            <th>Account</th>
+            <th>Branch</th>
+            <th>Local Path</th>
+            <th>Last SHA</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for repo in cloned %}
+          <tr>
+            <td>
+              <div class="flex items-center gap-2">
+                <div style="width:24px;height:24px;border-radius:4px;background:var(--color-bg-elevated);
+                            display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="2">
+                    <path d="M3 3h18M3 9h18M3 15h18M3 21h18"/>
+                  </svg>
+                </div>
+                <div>
+                  <a href="/repositories/{{ repo.uuid }}" class="font-medium">{{ repo.name }}</a>
+                  {% if repo.is_archived %}
+                    <span class="badge badge--neutral" style="font-size:10px;margin-left:4px">archived</span>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+            <td class="text-sm">{{ repo.account_alias | default(value="—") }}</td>
+            <td class="font-mono text-xs">{{ repo.default_branch }}</td>
+            <td class="font-mono text-xs text-muted" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              {{ repo.local_path | default(value="—") }}
+            </td>
+            <td class="font-mono text-xs text-muted">
+              {{ repo.last_commit_sha | default(value="—") | truncate(length=8, end="") }}
+            </td>
+            <td>
+              <div class="flex gap-2">
+                <a href="/repositories/{{ repo.uuid }}" class="btn btn--ghost btn--sm">Details</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Remote-only repos section -->
+  {% set remote = repositories | rejectattr("is_cloned") | list %}
+  {% if remote | length > 0 %}
+  <h2 class="sidebar-section-title" style="margin-bottom:var(--space-3);font-size:var(--text-xs)">
+    Remote Only ({{ remote | length }})
+  </h2>
+  <div class="card">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Repository</th>
+            <th>Account</th>
+            <th>Visibility</th>
+            <th>Language</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for repo in remote %}
+          <tr>
+            <td>
+              <div>
+                <a href="/repositories/{{ repo.uuid }}" class="font-medium">{{ repo.full_name }}</a>
+                {% if repo.description %}
+                  <p class="text-xs text-muted mt-0">{{ repo.description | truncate(length=80) }}</p>
+                {% endif %}
+              </div>
+            </td>
+            <td class="text-sm">{{ repo.account_alias | default(value="—") }}</td>
+            <td>
+              <span class="badge {% if repo.visibility == 'Public' %}badge--neutral{% else %}badge--info{% endif %}">
+                {{ repo.visibility | default(value="Private") }}
+              </span>
+            </td>
+            <td class="text-xs text-muted">{{ repo.primary_language | default(value="—") }}</td>
+            <td>
+              <a href="/repositories/clone?url={{ repo.clone_url_ssh | urlencode }}" class="btn btn--secondary btn--sm">Clone</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state card">
+    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M3 3h18M3 9h18M3 15h18M3 21h18"/>
+    </svg>
+    <h2 class="empty-state-title">No Repositories</h2>
+    <p class="empty-state-description">
+      Clone your first repository, or add an account with API access to discover remote repositories.
+    </p>
+    <a href="/repositories/clone" class="btn btn--primary">Clone a Repository</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

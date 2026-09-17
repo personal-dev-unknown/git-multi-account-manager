@@ -1,0 +1,47 @@
+{
+  "$schema":     "https://schema.tauri.app/config/2",
+  "productName": "Git Manager",
+  "version":     "0.1.0",
+  "identifier":  "com.gitmanager.desktop",
+  "build": {
+    "beforeDevCommand":   "cd frontend && pnpm run dev",
+    "beforeBuildCommand": "cd frontend && pnpm run build",
+    "devUrl":             "http://localhost:5173",
+    "frontendDist":       "frontend/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title":      "Git Multi-Account Manager",
+        "width":      1280,
+        "height":     768,
+        "minWidth":   900,
+        "minHeight":  600,
+        "resizable":  true,
+        "fullscreen": false,
+        "center":     true,
+        "decorations":true,
+        "visible":    true,
+        "focus":      true,
+        "transparent":false,
+        "alwaysOnTop":false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' tauri: asset: https://asset.localhost; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: asset: https://asset.localhost"
+    }
+  },
+  "bundle": {
+    "active":           true,
+    "category":         "DeveloperTool",
+    "copyright":        "2024 Git Manager Contributors",
+    "shortDescription": "Multi-account Git SSH manager",
+    "longDescription":  "Manage multiple GitHub, GitLab, Bitbucket, and Azure DevOps accounts with complete SSH key isolation. Each account gets its own SSH identity, config entry, and credential.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png"
+    ],
+    "targets": "all"
+  }
+}

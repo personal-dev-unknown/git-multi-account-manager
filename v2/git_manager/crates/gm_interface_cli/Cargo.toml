@@ -1,0 +1,45 @@
+[package]
+name        = "gm_interface_cli"
+version     = "0.1.0"
+edition     = "2021"
+description = "CLI interface plugin — the terminal frontend for Git Multi-Account Manager"
+
+# gm_interface_cli sits at the top of the dependency stack. It imports the
+# kernel (for Kernel, InterfacePlugin, service registry access), shared types,
+# and the domain layer directly so command handlers can call domain services
+# by their concrete types without wrapping every service in a port trait.
+#
+# It deliberately does NOT import gm_adapters — the concrete adapter instances
+# (ZigSshProvider, MySqlAccountRepository, etc.) are wired in by apps/cli/main.rs
+# and placed into the service registry before the CLI plugin's run() is called.
+
+[dependencies]
+gm_shared   = { path = "../gm_shared" }
+gm_domain   = { path = "../gm_domain" }
+gm_ports    = { path = "../gm_ports" }
+gm_kernel   = { path = "../gm_kernel" }
+
+# Async runtime
+tokio       = { workspace = true }
+async-trait = { workspace = true }
+tracing     = { workspace = true }
+
+# CLI argument parsing
+clap        = { version = "4", features = ["derive", "color", "help", "wrap_help"] }
+
+# Terminal UI components
+owo-colors  = "4"                       # zero-alloc ANSI colours
+tabled      = "0.20"                    # formatted table output
+indicatif   = "0.18.4"                    # progress bars and spinners
+dialoguer   = { version = "0.12.0", features = ["fuzzy-select"] }    # interactive prompts
+crossterm   = "0.29"                    # terminal control (width, clear, etc.)
+terminal_size = "0.4.4"                   # detect terminal dimensions
+atty        = "0.2"                     # detect whether stdout is a TTY
+ratatui     = { version = "0.26", default-features = false, features = ["crossterm"] }
+
+
+# Serialisation (for config display)
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+uuid        = { workspace = true }
+chrono      = { workspace = true }

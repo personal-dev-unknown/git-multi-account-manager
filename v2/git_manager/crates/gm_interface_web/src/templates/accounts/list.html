@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Accounts{% endblock %}
+
+{% block topbar_left %}
+<nav class="breadcrumb">
+  <a href="/">Home</a>
+  <span class="breadcrumb-sep">/</span>
+  <span class="breadcrumb-current">Accounts</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Accounts</h1>
+    <p class="page-subtitle">Manage your Git hosting accounts and their SSH credentials</p>
+  </div>
+  <a href="/accounts/new" class="btn btn--primary">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+    Add Account
+  </a>
+</div>
+
+<div class="page-body">
+  {% if accounts and accounts | length > 0 %}
+  <div class="card">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th>Platform</th>
+            <th>Username</th>
+            <th>Auth Method</th>
+            <th>SSH Key</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for account in accounts %}
+          <tr>
+            <td>
+              <div class="flex items-center gap-3">
+                <div class="account-avatar" style="width:32px;height:32px;font-size:var(--text-sm)">
+                  {{ account.alias | upper | truncate(length=2, end="") }}
+                </div>
+                <div>
+                  <div class="font-medium">{{ account.alias }}</div>
+                  <div class="text-xs text-muted">{{ account.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="badge badge--{{ account.platform_name | default(value='neutral') | lower | replace(from=' ', to='-') }}">
+                {{ account.platform_name | default(value="Unknown") }}
+              </span>
+            </td>
+            <td class="font-mono text-sm">{{ account.username }}</td>
+            <td>
+              <span class="badge badge--neutral">{{ account.auth_method | default(value="SSH") }}</span>
+            </td>
+            <td>
+              {% if account.has_active_ssh_key %}
+              <span class="badge badge--success">Active key</span>
+              {% else %}
+              <span class="badge badge--warning">No key</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge badge--{% if account.is_active %}success{% else %}neutral{% endif %}">
+                {% if account.is_active %}Active{% else %}Inactive{% endif %}
+              </span>
+            </td>
+            <td>
+              <div class="flex items-center gap-2">
+                <a href="/accounts/{{ account.uuid }}" class="btn btn--secondary btn--sm">View</a>
+                <a href="/ssh?account={{ account.uuid }}" class="btn btn--ghost btn--sm">SSH Keys</a>
+                <form method="POST" action="/accounts/{{ account.uuid }}/delete" style="display:inline"
+                      onsubmit="return confirm('Remove account {{ account.alias }}? This cannot be undone.')">
+                  <button type="submit" class="btn btn--danger btn--sm">Remove</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state card">
+    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+    </svg>
+    <h2 class="empty-state-title">No accounts yet</h2>
+    <p class="empty-state-description">
+      Add a GitHub, GitLab, Bitbucket, or Azure DevOps account to get started.
+      Each account gets its own SSH key for complete isolation.
+    </p>
+    <a href="/accounts/new" class="btn btn--primary">Add your first account</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

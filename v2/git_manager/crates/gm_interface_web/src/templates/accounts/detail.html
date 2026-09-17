@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}{{ account.alias }} — Account{% endblock %}
+
+{% block topbar_left %}
+<nav class="breadcrumb">
+  <a href="/">Home</a><span class="breadcrumb-sep">/</span>
+  <a href="/accounts">Accounts</a><span class="breadcrumb-sep">/</span>
+  <span class="breadcrumb-current">{{ account.alias }}</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="flex items-center gap-4">
+    <div class="account-avatar" style="width:56px;height:56px;font-size:var(--text-2xl);">
+      {{ account.alias | upper | truncate(length=2, end="") }}
+    </div>
+    <div>
+      <h1 class="page-title">{{ account.alias }}</h1>
+      <p class="page-subtitle">{{ account.username }} · {{ account.email }} · {{ account.platform_name | default(value="Unknown Platform") }}</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-3">
+    <a href="/ssh?account={{ account.uuid }}" class="btn btn--secondary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+      SSH Keys
+    </a>
+    <form method="POST" action="/accounts/{{ account.uuid }}/delete"
+          onsubmit="return confirm('Remove account {{ account.alias }}? This will also delete all associated SSH keys and credentials. This cannot be undone.')">
+      <button type="submit" class="btn btn--danger">Remove Account</button>
+    </form>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="grid-2 gap-6">
+
+    <!-- Account details -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Account Details</span></div>
+      <div class="card-body">
+        <dl style="display:grid;grid-template-columns:1fr 2fr;gap:var(--space-3) var(--space-4);">
+          <dt class="text-sm text-muted font-medium">Alias</dt>
+          <dd class="text-sm font-mono">{{ account.alias }}</dd>
+
+          <dt class="text-sm text-muted font-medium">Platform</dt>
+          <dd>
+            <span class="badge badge--{{ account.platform_name | default(value='neutral') | lower | replace(from=' ', to='-') }}">
+              {{ account.platform_name | default(value="Unknown") }}
+            </span>
+          </dd>
+
+          <dt class="text-sm text-muted font-medium">Username</dt>
+          <dd class="text-sm font-mono">{{ account.username }}</dd>
+
+          <dt class="text-sm text-muted font-medium">Email</dt>
+          <dd class="text-sm">{{ account.email }}</dd>
+
+          <dt class="text-sm text-muted font-medium">Auth Method</dt>
+          <dd><span class="badge badge--neutral">{{ account.auth_method | default(value="SSH") }}</span></dd>
+
+          <dt class="text-sm text-muted font-medium">Status</dt>
+          <dd>
+            <span class="badge badge--{% if account.is_active %}success{% else %}neutral{% endif %}">
+              {% if account.is_active %}Active{% else %}Inactive{% endif %}
+            </span>
+          </dd>
+
+          {% if account.created_at %}
+          <dt class="text-sm text-muted font-medium">Created</dt>
+          <dd class="text-sm">{{ account.created_at | date(format="%B %d, %Y") }}</dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+
+    <!-- SSH key summary -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Active SSH Key</span>
+        <a href="/ssh/generate?account={{ account.uuid }}" class="btn btn--primary btn--sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          Generate Key
+        </a>
+      </div>
+      {% if active_ssh_key %}
+      <div class="card-body">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="ssh-key-indicator ssh-key-indicator--{% if active_ssh_key.last_test_status == 'Success' %}active{% elif active_ssh_key.last_test_status == 'Failed' %}failed{% else %}inactive{% endif %}"></span>
+          <div class="min-w-0">
+            <p class="font-medium truncate">{{ active_ssh_key.name }}</p>
+            <p class="text-xs text-muted">{{ active_ssh_key.key_type }} · {{ active_ssh_key.fingerprint | truncate(length=20) }}</p>
+          </div>
+        </div>
+
+        {% if active_ssh_key.public_key %}
+        <div class="form-group">
+          <label class="form-label">Public Key — Add to {{ account.platform_name | default(value="your platform") }}</label>
+          <div class="pub-key-block" id="pub-key">{{ active_ssh_key.public_key }}</div>
+          <button class="btn btn--secondary btn--sm mt-2" onclick="copyPubKey()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy Public Key
+          </button>
+        </div>
+        {% endif %}
+
+        <div class="flex gap-3 mt-4">
+          <a href="/ssh/test?account={{ account.uuid }}" class="btn btn--secondary btn--sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Test Connection
+          </a>
+          <a href="/ssh?account={{ account.uuid }}" class="btn btn--ghost btn--sm">View All Keys</a>
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding: var(--space-8);">
+        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        <p class="empty-state-title" style="font-size:var(--text-base)">No SSH Key</p>
+        <p class="empty-state-description">Generate an SSH key pair to authenticate with {{ account.platform_name | default(value="the platform") }}.</p>
+        <a href="/ssh/generate?account={{ account.uuid }}" class="btn btn--primary btn--sm">Generate SSH Key</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Repositories for this account -->
+  {% if repositories and repositories | length > 0 %}
+  <div class="card mt-6">
+    <div class="card-header">
+      <span class="card-title">Repositories ({{ repositories | length }})</span>
+      <a href="/repositories/clone?account={{ account.uuid }}" class="btn btn--secondary btn--sm">Clone Repository</a>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Repository</th><th>Branch</th><th>Local Path</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          {% for repo in repositories %}
+          <tr>
+            <td><a href="/repositories/{{ repo.uuid }}" class="font-medium">{{ repo.name }}</a></td>
+            <td class="font-mono text-sm">{{ repo.default_branch }}</td>
+            <td class="font-mono text-xs text-muted truncate" style="max-width:200px">{{ repo.local_path | default(value="—") }}</td>
+            <td><span class="badge badge--{% if repo.is_cloned %}info{% else %}neutral{% endif %}">{% if repo.is_cloned %}Cloned{% else %}Remote{% endif %}</span></td>
+            <td><a href="/repositories/{{ repo.uuid }}" class="btn btn--ghost btn--sm">View</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function copyPubKey() {
+  var key = document.getElementById('pub-key').textContent.trim();
+  navigator.clipboard.writeText(key).then(function() {
+    var btn = event.target.closest('button');
+    var orig = btn.innerHTML;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg> Copied!';
+    btn.disabled = true;
+    setTimeout(function() { btn.innerHTML = orig; btn.disabled = false; }, 2000);
+  });
+}
+</script>
+{% endblock %}

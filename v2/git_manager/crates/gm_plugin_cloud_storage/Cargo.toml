@@ -1,0 +1,16 @@
+[package]
+name        = "gm_plugin_cloud_storage"
+version     = "0.1.0"
+edition     = "2021"
+description = "Cloud Storage platform plugin (S3, GCS, Azure Blob)"
+
+[dependencies]
+gm_shared   = { path = "../gm_shared" }
+gm_ports    = { path = "../gm_ports" }
+gm_kernel   = { path = "../gm_kernel" }
+
+tokio       = { workspace = true }
+async-trait = { workspace = true }
+serde       = { workspace = true }
+uuid        = { workspace = true }
+tracing     = { workspace = true }

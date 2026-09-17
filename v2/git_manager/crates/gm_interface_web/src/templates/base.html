@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Git Multi-Account Manager — manage multiple Git hosting accounts with SSH key isolation">
+  <title>{% block title %}Git Manager{% endblock %} — Git Multi-Account Manager</title>
+  <link rel="stylesheet" href="/static/css/themes.css">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  {% block head %}{% endblock %}
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── Sidebar navigation ─────────────────────────────────────────────────── -->
+  <nav class="sidebar" aria-label="Main navigation">
+    <div class="sidebar-logo" aria-label="Git Manager home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+      </svg>
+      Git Manager
+    </div>
+
+    <div class="sidebar-nav">
+      <p class="sidebar-section-title">Workspace</p>
+      <a href="/" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}" aria-current="{% if active_page == 'dashboard' %}page{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a href="/accounts" class="nav-item {% if active_page == 'accounts' %}active{% endif %}" aria-current="{% if active_page == 'accounts' %}page{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Accounts
+      </a>
+      <a href="/repositories" class="nav-item {% if active_page == 'repositories' %}active{% endif %}" aria-current="{% if active_page == 'repositories' %}page{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3h18M3 9h18M3 15h18M3 21h18"/></svg>
+        Repositories
+      </a>
+      <a href="/ssh" class="nav-item {% if active_page == 'ssh' %}active{% endif %}" aria-current="{% if active_page == 'ssh' %}page{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        SSH Keys
+      </a>
+    </div>
+
+    <!-- Theme toggle at bottom of sidebar -->
+    <div class="p-4 border-b" style="border-top: 1px solid var(--color-border); margin-top: auto;">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle colour theme" title="Toggle dark/light mode">
+        <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+          <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+        </svg>
+        <svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="display:none">
+          <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Main content area ─────────────────────────────────────────────────────── -->
+  <div class="main-content">
+    <!-- Top bar -->
+    <header class="topbar" role="banner">
+      <div class="flex items-center gap-4">
+        {% block topbar_left %}{% endblock %}
+      </div>
+      <div class="flex items-center gap-3">
+        {% block topbar_right %}{% endblock %}
+        <a href="/accounts/new" class="btn btn--primary btn--sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 5v14M5 12h14"/></svg>
+          Add Account
+        </a>
+      </div>
+    </header>
+
+    <!-- Flash messages -->
+    {% if flash_success %}
+    <div class="alert alert--success animate-fade-in" role="alert" style="margin: var(--space-4) var(--space-6) 0; border-radius: var(--radius-md);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+      <div class="alert-body">{{ flash_success }}</div>
+      <button class="btn btn--ghost btn--icon btn--sm" onclick="this.closest('.alert').remove()" aria-label="Dismiss">×</button>
+    </div>
+    {% endif %}
+
+    {% if flash_error %}
+    <div class="alert alert--error animate-fade-in" role="alert" style="margin: var(--space-4) var(--space-6) 0; border-radius: var(--radius-md);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+      <div class="alert-body">{{ flash_error }}</div>
+      <button class="btn btn--ghost btn--icon btn--sm" onclick="this.closest('.alert').remove()" aria-label="Dismiss">×</button>
+    </div>
+    {% endif %}
+
+    <!-- Page content -->
+    <main id="main-content" tabindex="-1">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<script>
+  // ── Theme persistence ──────────────────────────────────────────────────────
+  (function () {
+    const stored = localStorage.getItem('gm-theme') || 'auto';
+    const html   = document.documentElement;
+    if (stored === 'dark')  html.setAttribute('data-theme', 'dark');
+    if (stored === 'light') html.setAttribute('data-theme', 'light');
+    updateToggleIcon(stored === 'dark' || (stored === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches));
+  })();
+
+  function updateToggleIcon(isDark) {
+    document.getElementById('icon-moon').style.display = isDark ? 'none' : 'block';
+    document.getElementById('icon-sun').style.display  = isDark ? 'block' : 'none';
+  }
+
+  document.getElementById('theme-toggle').addEventListener('click', function () {
+    const html    = document.documentElement;
+    const current = html.getAttribute('data-theme') || 'auto';
+    const next    = (current === 'dark') ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('gm-theme', next);
+    updateToggleIcon(next === 'dark');
+  });
+
+  // ── Auto-dismiss flash messages after 5s ──────────────────────────────────
+  document.querySelectorAll('.alert').forEach(function (el) {
+    setTimeout(function () {
+      el.style.transition = 'opacity .3s';
+      el.style.opacity = '0';
+      setTimeout(function () { el.remove(); }, 300);
+    }, 5000);
+  });
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,35 @@
+[package]
+name        = "git-manager-desktop"
+version     = "0.1.0"
+edition     = "2021"
+description = "Git Multi-Account Manager — Tauri desktop application binary"
+
+[[bin]]
+name = "git-manager-desktop"
+path = "src/main.rs"
+
+[dependencies]
+gm_interface_desktop   = { path = "../../crates/gm_interface_desktop" }
+gm_kernel              = { path = "../../crates/gm_kernel" }
+gm_domain              = { path = "../../crates/gm_domain" }
+gm_ports               = { path = "../../crates/gm_ports" }
+gm_adapters            = { path = "../../crates/gm_adapters" }
+gm_shared              = { path = "../../crates/gm_shared" }
+gm_plugin_github       = { path = "../../crates/gm_plugin_github" }
+gm_plugin_gitlab       = { path = "../../crates/gm_plugin_gitlab" }
+gm_plugin_bitbucket       = { path = "../../crates/gm_plugin_bitbucket" }
+gm_plugin_azure_devops    = { path = "../../crates/gm_plugin_azure_devops" }
+gm_plugin_sourceforge     = { path = "../../crates/gm_plugin_sourceforge" }
+gm_plugin_custom          = { path = "../../crates/gm_plugin_custom" }
+gm_plugin_cloud_storage   = { path = "../../crates/gm_plugin_cloud_storage" }
+gm_plugin_local_path      = { path = "../../crates/gm_plugin_local_path" }
+tokio                  = { workspace = true }
+tracing                = { workspace = true }
+tracing-subscriber     = { workspace = true }
+uuid                   = { workspace = true }
+async-trait            = { workspace = true }
+sqlx                   = { workspace = true }
+dirs-next              = { workspace = true }
+anyhow                 = "1"
+reqwest                = { workspace = true }
+serde_json             = { workspace = true }

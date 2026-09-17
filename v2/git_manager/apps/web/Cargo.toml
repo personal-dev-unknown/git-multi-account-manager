@@ -1,0 +1,55 @@
+[package]
+name        = "git-manager-web"
+version     = "0.1.0"
+edition     = "2021"
+description = "Git Multi-Account Manager — Web interface binary"
+
+[[bin]]
+name = "git-manager-web"
+path = "src/main.rs"
+
+[dependencies]
+# Interface plugin — defines WebPlugin, WebServices, WebServicesHandle
+gm_interface_web = { path = "../../crates/gm_interface_web" }
+
+# Kernel — bootstrap, Kernel struct, plugin loading
+gm_kernel        = { path = "../../crates/gm_kernel" }
+
+# Domain services
+gm_domain        = { path = "../../crates/gm_domain" }
+
+# Ports — inbound commands
+gm_ports         = { path = "../../crates/gm_ports" }
+
+# Adapters — concrete repositories and Zig-backed providers
+gm_adapters      = { path = "../../crates/gm_adapters" }
+
+# Shared — DTOs, error types
+gm_shared        = { path = "../../crates/gm_shared" }
+
+# Async runtime
+tokio            = { workspace = true }
+async-trait      = { workspace = true }
+tracing          = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Provider plugins — registered in the plugin list at bootstrap
+gm_plugin_github       = { path = "../../crates/gm_plugin_github" }
+gm_plugin_gitlab       = { path = "../../crates/gm_plugin_gitlab" }
+gm_plugin_bitbucket       = { path = "../../crates/gm_plugin_bitbucket" }
+gm_plugin_azure_devops    = { path = "../../crates/gm_plugin_azure_devops" }
+gm_plugin_sourceforge     = { path = "../../crates/gm_plugin_sourceforge" }
+gm_plugin_custom          = { path = "../../crates/gm_plugin_custom" }
+gm_plugin_cloud_storage   = { path = "../../crates/gm_plugin_cloud_storage" }
+gm_plugin_local_path      = { path = "../../crates/gm_plugin_local_path" }
+
+# Misc
+uuid             = { workspace = true }
+anyhow           = "1"
+sqlx             = { workspace = true }
+serde_json       = { workspace = true }
+chrono           = { workspace = true }
+dirs-next        = { workspace = true }
+
+# HTTP client — for remote repo listing via platform APIs
+reqwest          = { workspace = true }

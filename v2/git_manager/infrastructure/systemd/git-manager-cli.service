@@ -1,0 +1,39 @@
+# Git Multi-Account zyrix — CLI Agent systemd Unit
+# Background agent for scheduled operations and event processing.
+# Install: sudo cp git-zyrix-cli.service /etc/systemd/system/
+# Enable:  sudo systemctl enable git-zyrix-cli
+# Start:   sudo systemctl start git-zyrix-cli
+
+[Unit]
+Description=Git Multi-Account zyrix — CLI Background Agent
+Documentation=https://github.com/zanabuni/git-multi-account-zyrix
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=git-zyrix
+Group=git-zyrix
+ExecStart=/usr/bin/git-zyrix agent
+Restart=on-failure
+RestartSec=10s
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectHome=read-only
+ProtectSystem=full
+ReadWritePaths=/var/lib/git-zyrix /home
+CapabilityBoundingSet=
+PrivateTmp=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+
+Environment="RUST_LOG=info"
+# Set GIT_ZYRIX_DB_URL in /etc/git-zyrix/environment
+EnvironmentFile=-/etc/git-zyrix/environment
+
+[Install]
+WantedBy=multi-user.target

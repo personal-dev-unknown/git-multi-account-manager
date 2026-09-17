@@ -1,0 +1,10 @@
+Package: git-manager
+Version: 1.0.0
+Architecture: amd64
+Maintainer: Git Manager Developers <dev@gitmanager.dev>
+Depends: libsecret-1-0, openssh-client, git
+Description: Multi-account Git manager
+ Manage multiple GitHub, GitLab, Bitbucket, and Azure DevOps accounts from
+ a single CLI, web, or desktop interface with automatic SSH key management.
+Section: utils
+Priority: optional

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Git Multi-Account Manager desktop application" />
+
+    <!--
+      Tauri's CSP overrides this <meta> in production builds.
+      In development, the Vite dev server (http://localhost:5173) serves this file.
+      The tauri.conf.json security.csp setting controls production policy.
+    -->
+
+    <title>Git Manager</title>
+
+    <!--
+      Inline theme bootstrap: reads localStorage before first paint to prevent
+      the flash of wrong theme that would happen if we waited for main.ts.
+    -->
+    <script>
+      (function () {
+        var stored = typeof localStorage !== 'undefined' && localStorage.getItem('gm-theme');
+        if (stored === 'dark' || stored === 'light') {
+          document.documentElement.setAttribute('data-theme', stored);
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-B-5iROok.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DHMnuT8G.css">
+  </head>
+  <body>
+    <!--
+      The #app div is where Svelte mounts the root App component.
+      All UI is rendered inside this element — nothing is in the body directly.
+    -->
+    <div id="app"></div>
+
+    <!--
+      Vite processes this script tag to bundle the TypeScript entry point.
+      The path is relative to this index.html file, which is in the frontend/ root.
+    -->
+  </body>
+</html>

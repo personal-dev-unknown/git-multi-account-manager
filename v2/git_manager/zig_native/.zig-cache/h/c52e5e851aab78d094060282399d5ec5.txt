@@ -1,0 +1,15 @@
+0
+2821 5921092 1000000000 07cab6d9357d16de64ad0fa64a47e833 0 /nix/store/29isvm6vfq10c528i31igdiy3fnvjcm3-glibc-2.42-67-dev/include/sys/statvfs.h
+19283 5157690 1000000000 9606a1de69bba18f75a886b3901827f5 0 /nix/store/29isvm6vfq10c528i31igdiy3fnvjcm3-glibc-2.42-67-dev/include/features.h
+1532 5157689 1000000000 a07668ce64dd05f4c58d239bd85a2bcb 0 /nix/store/29isvm6vfq10c528i31igdiy3fnvjcm3-glibc-2.42-67-dev/include/features-time64.h
+398 5270444 1000000000 d747ec9a0fdba458d49068b678b29de6 0 /nix/store/29isvm6vfq10c528i31igdiy3fnvjcm3-glibc-2.42-67-dev/include/bits/wordsize.h
+1109 5270424 1000000000 7b5c19e5e5f31de2717c174e07470ff1 0 /nix/store/29isvm6vfq10c528i31igdiy3fnvjcm3-glibc-2.42-67-dev/include/bits/timesize.h
+2462 5157754 1000000000 0a19c4e9f90565325f11b80216decb81 0 /nix/store/29isvm6vfq10c528i31igdiy3fnvjcm3-glibc-2.42-67-dev/include/stdc-predef.h
+34638 5921036 1000000000 a864906bf35c1d9d271b3b1a7df324d8 0 /nix/store/29isvm6vfq10c528i31igdiy3fnvjcm3-glibc-2.42-67-dev/include/sys/cdefs.h
+970 5270314 1000000000 d2875bbfdef59b98ab55231881f04395 0 /nix/store/29isvm6vfq10c528i31igdiy3fnvjcm3-glibc-2.42-67-dev/include/bits/long-double.h
+384 5920965 1000000000 bbd76beb33f6f3d22f67335a8823e269 0 /nix/store/29isvm6vfq10c528i31igdiy3fnvjcm3-glibc-2.42-67-dev/include/gnu/stubs.h
+481 5920964 1000000000 13e633d41f2bea1a7912ab01537b2ba8 0 /nix/store/29isvm6vfq10c528i31igdiy3fnvjcm3-glibc-2.42-67-dev/include/gnu/stubs-64.h
+3569 5270382 1000000000 ca878edfee04b5183404ce2973ff05d7 0 /nix/store/29isvm6vfq10c528i31igdiy3fnvjcm3-glibc-2.42-67-dev/include/bits/statvfs.h
+8806 5270426 1000000000 34d3de16059774e13ada552b79559531 0 /nix/store/29isvm6vfq10c528i31igdiy3fnvjcm3-glibc-2.42-67-dev/include/bits/types.h
+3737 5270427 1000000000 5e8092301dfec23a86acd552b1d384f9 0 /nix/store/29isvm6vfq10c528i31igdiy3fnvjcm3-glibc-2.42-67-dev/include/bits/typesizes.h
+1340 5270422 1000000000 5960a3dbcbe464b68da58a632f270038 0 /nix/store/29isvm6vfq10c528i31igdiy3fnvjcm3-glibc-2.42-67-dev/include/bits/time64.h

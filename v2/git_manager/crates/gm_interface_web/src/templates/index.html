@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block topbar_left %}
+<span class="text-sm text-muted">Dashboard</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle">Overview of your Git accounts, repositories, and SSH keys</p>
+  </div>
+  <div class="flex items-center gap-3">
+    <a href="/repositories/clone" class="btn btn--secondary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Clone Repository
+    </a>
+    <a href="/accounts/new" class="btn btn--primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      Add Account
+    </a>
+  </div>
+</div>
+
+<div class="page-body">
+
+  <!-- Summary stats -->
+  <div class="grid-3 mb-6">
+    <div class="card card--elevated">
+      <div class="card-body flex items-center gap-4">
+        <div style="width:48px;height:48px;border-radius:var(--radius-lg);background:var(--color-brand-muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" stroke-width="2" width="24" height="24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div>
+          <p class="text-sm text-muted">Accounts</p>
+          <p class="text-3xl font-bold">{{ stats.account_count | default(value="0") }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="card card--elevated">
+      <div class="card-body flex items-center gap-4">
+        <div style="width:48px;height:48px;border-radius:var(--radius-lg);background:var(--color-success-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2" width="24" height="24"><path d="M3 3h18M3 9h18M3 15h18M3 21h18"/></svg>
+        </div>
+        <div>
+          <p class="text-sm text-muted">Cloned Repos</p>
+          <p class="text-3xl font-bold">{{ stats.cloned_repo_count | default(value="0") }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="card card--elevated">
+      <div class="card-body flex items-center gap-4">
+        <div style="width:48px;height:48px;border-radius:var(--radius-lg);background:var(--color-warning-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-warning)" stroke-width="2" width="24" height="24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        </div>
+        <div>
+          <p class="text-sm text-muted">Active SSH Keys</p>
+          <p class="text-3xl font-bold">{{ stats.active_ssh_key_count | default(value="0") }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2 gap-6">
+    <!-- Recent accounts -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Recent Accounts</span>
+        <a href="/accounts" class="btn btn--ghost btn--sm">View all</a>
+      </div>
+      {% if accounts and accounts | length > 0 %}
+      <div class="divide-y">
+        {% for account in accounts | slice(end=5) %}
+        <a href="/accounts/{{ account.uuid }}" class="account-card card--hover" style="display:grid;text-decoration:none;color:inherit;">
+          <div class="account-avatar">{{ account.alias | upper | truncate(length=2, end="") }}</div>
+          <div class="min-w-0">
+            <p class="font-medium truncate">{{ account.alias }}</p>
+            <p class="text-xs text-muted truncate">{{ account.username }} · {{ account.platform_name | default(value="Unknown platform") }}</p>
+          </div>
+          <span class="badge badge--{% if account.is_active %}success{% else %}neutral{% endif %}">
+            {% if account.is_active %}Active{% else %}Inactive{% endif %}
+          </span>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding: var(--space-8);">
+        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <p class="empty-state-title" style="font-size:var(--text-base)">No accounts yet</p>
+        <p class="empty-state-description">Add your first Git hosting account to get started.</p>
+        <a href="/accounts/new" class="btn btn--primary btn--sm">Add Account</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Recent repositories -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Local Repositories</span>
+        <a href="/repositories" class="btn btn--ghost btn--sm">View all</a>
+      </div>
+      {% if repositories and repositories | length > 0 %}
+      <div class="divide-y">
+        {% for repo in repositories | slice(end=5) %}
+        <a href="/repositories/{{ repo.uuid }}" class="flex items-center gap-4 p-4 card--hover" style="text-decoration:none;color:inherit;">
+          <div class="flex-1 min-w-0">
+            <p class="font-medium truncate">{{ repo.name }}</p>
+            <p class="text-xs text-muted truncate">{{ repo.local_path | default(value="Not cloned") }}</p>
+          </div>
+          <span class="badge badge--{% if repo.is_cloned %}info{% else %}neutral{% endif %}">
+            {% if repo.is_cloned %}Cloned{% else %}Remote{% endif %}
+          </span>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding: var(--space-8);">
+        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h18M3 9h18M3 15h18M3 21h18"/></svg>
+        <p class="empty-state-title" style="font-size:var(--text-base)">No repositories</p>
+        <p class="empty-state-description">Clone your first repository to see it here.</p>
+        <a href="/repositories/clone" class="btn btn--primary btn--sm">Clone Repository</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

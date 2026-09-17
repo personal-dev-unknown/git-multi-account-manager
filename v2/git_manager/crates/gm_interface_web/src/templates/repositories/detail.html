@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% block title %}{{ repo.name }} — Repository{% endblock %}
+
+{% block topbar_left %}
+<nav class="breadcrumb">
+  <a href="/">Home</a><span class="breadcrumb-sep">/</span>
+  <a href="/repositories">Repositories</a><span class="breadcrumb-sep">/</span>
+  <span class="breadcrumb-current">{{ repo.name }}</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="flex items-start gap-4">
+    <div style="width:48px;height:48px;border-radius:var(--radius-lg);background:var(--color-bg-elevated);
+                display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="2">
+        <path d="M3 3h18M3 9h18M3 15h18M3 21h18"/>
+      </svg>
+    </div>
+    <div>
+      <h1 class="page-title">{{ repo.name }}</h1>
+      <p class="page-subtitle font-mono text-xs">{{ repo.full_name }}</p>
+      {% if repo.description %}
+        <p class="text-sm text-muted mt-1">{{ repo.description }}</p>
+      {% endif %}
+    </div>
+  </div>
+  <div class="flex gap-2 flex-shrink-0">
+    {% if repo.is_cloned %}
+    <form method="POST" action="/repositories/{{ repo.uuid }}/pull">
+      <button type="submit" class="btn btn--secondary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+        </svg>
+        Pull
+      </button>
+    </form>
+    {% else %}
+    <a href="/repositories/clone?url={{ repo.clone_url_ssh | default(value=repo.remote_url) | urlencode }}&account={{ repo.account_id }}"
+       class="btn btn--primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Clone Locally
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="grid-2 gap-6">
+
+    <!-- Repository details -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Details</span></div>
+      <div class="card-body">
+        <dl style="display:grid;grid-template-columns:1fr 2fr;gap:var(--space-3) var(--space-4);">
+
+          <dt class="text-sm text-muted font-medium">Account</dt>
+          <dd>
+            {% if repo.account_alias %}
+              <a href="/accounts/{{ repo.account_id }}" class="text-sm">{{ repo.account_alias }}</a>
+            {% else %}
+              <span class="text-sm text-muted">—</span>
+            {% endif %}
+          </dd>
+
+          <dt class="text-sm text-muted font-medium">Platform</dt>
+          <dd>
+            <span class="badge badge--neutral">{{ repo.platform_name | default(value="unknown") }}</span>
+          </dd>
+
+          <dt class="text-sm text-muted font-medium">Visibility</dt>
+          <dd>
+            <span class="badge {% if repo.visibility == 'Public' %}badge--neutral{% else %}badge--info{% endif %}">
+              {{ repo.visibility | default(value="Private") }}
+            </span>
+          </dd>
+
+          <dt class="text-sm text-muted font-medium">Default Branch</dt>
+          <dd class="font-mono text-sm">{{ repo.default_branch }}</dd>
+
+          {% if repo.current_branch %}
+          <dt class="text-sm text-muted font-medium">Current Branch</dt>
+          <dd class="font-mono text-sm">{{ repo.current_branch }}</dd>
+          {% endif %}
+
+          <dt class="text-sm text-muted font-medium">Clone Status</dt>
+          <dd>
+            <span class="badge {% if repo.is_cloned %}badge--info{% else %}badge--neutral{% endif %}">
+              {% if repo.is_cloned %}Cloned{% else %}Remote Only{% endif %}
+            </span>
+          </dd>
+
+          {% if repo.local_path %}
+          <dt class="text-sm text-muted font-medium">Local Path</dt>
+          <dd class="font-mono text-xs break-all">{{ repo.local_path }}</dd>
+          {% endif %}
+
+          {% if repo.last_commit_sha %}
+          <dt class="text-sm text-muted font-medium">Last Commit</dt>
+          <dd>
+            <code class="text-xs font-mono">{{ repo.last_commit_sha | truncate(length=8, end="") }}</code>
+            {% if repo.last_commit_message %}
+              <p class="text-xs text-muted mt-0">{{ repo.last_commit_message | truncate(length=60) }}</p>
+            {% endif %}
+          </dd>
+          {% endif %}
+
+          {% if repo.last_synced_at %}
+          <dt class="text-sm text-muted font-medium">Last Synced</dt>
+          <dd class="text-sm">{{ repo.last_synced_at | date(format="%B %d, %Y %H:%M") }}</dd>
+          {% endif %}
+
+          {% if repo.primary_language %}
+          <dt class="text-sm text-muted font-medium">Language</dt>
+          <dd class="text-sm">{{ repo.primary_language }}</dd>
+          {% endif %}
+
+        </dl>
+      </div>
+    </div>
+
+    <!-- Working directory status (for cloned repos) -->
+    {% if repo.is_cloned %}
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Working Directory</span>
+        {% if status_entries is defined %}
+          <span class="text-sm text-muted">{{ status_entries | length }} change{% if status_entries | length != 1 %}s{% endif %}</span>
+        {% endif %}
+      </div>
+
+      {% if status_entries is defined and status_entries | length > 0 %}
+      <div style="overflow-y:auto;max-height:280px;">
+        {% for entry in status_entries %}
+        <div class="flex items-center gap-3 p-3 border-b" style="border-color:var(--color-border);">
+          <code class="font-mono text-xs"
+                style="width:22px;color:{% if entry.status[0] != ' ' and entry.status[0] != '?' %}var(--color-brand){% else %}var(--color-text-muted){% endif %}">
+            {{ entry.status }}
+          </code>
+          <span class="text-sm font-mono truncate flex-1">{{ entry.path }}</span>
+          {% if entry.status[0] != ' ' and entry.status[0] != '?' %}
+            <span class="badge badge--info" style="font-size:10px">staged</span>
+          {% elif entry.status[1] == 'M' %}
+            <span class="badge badge--warning" style="font-size:10px">modified</span>
+          {% elif entry.status[1] == 'D' %}
+            <span class="badge badge--error" style="font-size:10px">deleted</span>
+          {% elif entry.status == '??' %}
+            <span class="badge badge--neutral" style="font-size:10px">untracked</span>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="card-footer flex gap-2">
+        <a href="/repositories/{{ repo.uuid }}/push" class="btn btn--primary btn--sm">
+          Commit &amp; Push
+        </a>
+        <form method="POST" action="/repositories/{{ repo.uuid }}/pull" style="display:inline">
+          <button type="submit" class="btn btn--secondary btn--sm">Pull First</button>
+        </form>
+      </div>
+
+      {% else %}
+      <div class="p-6 text-center">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--color-success-bg);
+                    display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-3);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/>
+          </svg>
+        </div>
+        <p class="text-sm font-medium">Working directory clean</p>
+        <p class="text-xs text-muted mt-1">No uncommitted changes.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    {% else %}
+    <!-- Clone prompt for remote-only repos -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Clone this Repository</span></div>
+      <div class="card-body">
+        {% if repo.clone_url_ssh %}
+        <div class="form-group">
+          <label class="form-label">SSH URL</label>
+          <div class="pub-key-block" id="ssh-url">{{ repo.clone_url_ssh }}</div>
+          <button class="btn btn--secondary btn--sm mt-2" onclick="copyUrl('ssh-url')">Copy SSH URL</button>
+        </div>
+        {% endif %}
+        {% if repo.clone_url_https %}
+        <div class="form-group mt-4">
+          <label class="form-label">HTTPS URL</label>
+          <div class="pub-key-block" id="https-url">{{ repo.clone_url_https }}</div>
+          <button class="btn btn--ghost btn--sm mt-2" onclick="copyUrl('https-url')">Copy HTTPS URL</button>
+        </div>
+        {% endif %}
+        <a href="/repositories/clone?url={{ repo.clone_url_ssh | default(value=repo.remote_url) | urlencode }}&account={{ repo.account_id }}"
+           class="btn btn--primary w-full mt-4">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Clone with Git Manager
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Repository stats (public repos) -->
+  {% if repo.stargazers_count or repo.forks_count or repo.open_issues_count %}
+  <div class="grid-3 gap-4 mt-6">
+    <div class="card">
+      <div class="card-body text-center">
+        <p class="text-3xl font-bold">{{ repo.stargazers_count | default(value=0) }}</p>
+        <p class="text-sm text-muted mt-1">Stars</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body text-center">
+        <p class="text-3xl font-bold">{{ repo.forks_count | default(value=0) }}</p>
+        <p class="text-sm text-muted mt-1">Forks</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body text-center">
+        <p class="text-3xl font-bold">{{ repo.open_issues_count | default(value=0) }}</p>
+        <p class="text-sm text-muted mt-1">Open Issues</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+{% block scripts %}
+<script>
+function copyUrl(id) {
+  var text = document.getElementById(id).textContent.trim();
+  navigator.clipboard.writeText(text).then(function() {
+    var btn = event.currentTarget;
+    var orig = btn.textContent;
+    btn.textContent = '✓ Copied';
+    setTimeout(function() { btn.textContent = orig; }, 2000);
+  });
+}
+</script>
+{% endblock %}
+{% endblock %}

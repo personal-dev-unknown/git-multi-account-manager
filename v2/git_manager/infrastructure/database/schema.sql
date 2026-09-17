@@ -1,0 +1,12 @@
+-- Git Manager — Reference Schema
+-- This file is the human-readable reference copy of the production schema.
+-- The authoritative source for migrations is:
+--   crates/gm_adapters/src/persistence/migrations/
+-- Run: sqlx migrate run --source crates/gm_adapters/src/persistence/migrations
+-- This file is kept in sync for documentation and for tools that prefer a
+-- single schema file (e.g. dbdiagram.io, SchemaSpy).
+
+-- See crates/gm_adapters/src/persistence/migrations/20240101000000_initial_schema.sql
+-- for the full table definitions.
+-- See crates/gm_adapters/src/persistence/migrations/20240101000001_seed_platforms.sql
+-- for the seed data.

@@ -1,0 +1,48 @@
+# ============================================================
+# Git Multi-Account Manager — Docker Compose
+# Spins up MySQL 8 + the web application container.
+# ============================================================
+
+version: "3.9"
+
+services:
+
+  db:
+    image: mysql:8.0
+    container_name: gm-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-git_manager}
+      MYSQL_USER: ${MYSQL_USER:-gm_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-gm_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - gm_mysql_data:/var/lib/mysql
+      - ./infrastructure/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gm-web
+    restart: unless-stopped
+    ports:
+      - "${GM_WEB_PORT:-5008}:5008"
+    environment:
+      GIT_MANAGER_DB_URL: mysql://${MYSQL_USER:-gm_user}:${MYSQL_PASSWORD:-gm_password}@db:3306/${MYSQL_DATABASE:-git_manager}
+      GIT_MANAGER_WEB_ADDR: 0.0.0.0:5008
+      RUST_LOG: ${RUST_LOG:-info}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  gm_mysql_data:

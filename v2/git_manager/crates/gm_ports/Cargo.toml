@@ -1,0 +1,18 @@
+[package]
+name        = "gm_ports"
+version     = "0.1.0"
+edition     = "2021"
+description = "Hexagonal boundary: inbound commands/queries and outbound infrastructure traits"
+
+# gm_ports sits between the kernel and the domain.
+# It knows about gm_shared (for DTOs and error types) and gm_domain (for the
+# entity types that commands carry). The kernel imports gm_ports to understand
+# what commands exist; adapters import gm_ports to know which traits to implement.
+
+[dependencies]
+gm_shared   = { path = "../gm_shared" }
+gm_domain   = { path = "../gm_domain" }
+serde       = { workspace = true }
+uuid        = { workspace = true }
+chrono      = { workspace = true }
+async-trait = { workspace = true }

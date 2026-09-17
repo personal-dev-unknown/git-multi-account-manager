@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}SSH Keys{% endblock %}
+
+{% block topbar_left %}
+<nav class="breadcrumb">
+  <a href="/">Home</a><span class="breadcrumb-sep">/</span>
+  <span class="breadcrumb-current">SSH Keys</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">SSH Keys</h1>
+    <p class="page-subtitle">One active key per account — each key maps to a dedicated SSH config Host block</p>
+  </div>
+  <a href="/ssh/generate{% if account_uuid %}?account={{ account_uuid }}{% endif %}" class="btn btn--primary">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+    Generate Key
+  </a>
+</div>
+
+<div class="page-body">
+
+  <!-- Account filter tabs -->
+  {% if accounts and accounts | length > 1 %}
+  <div class="flex gap-2 flex-wrap mb-5">
+    <a href="/ssh" class="btn btn--sm {% if not account_uuid %}btn--primary{% else %}btn--secondary{% endif %}">All</a>
+    {% for acc in accounts %}
+    <a href="/ssh?account={{ acc.uuid }}"
+       class="btn btn--sm {% if account_uuid == acc.uuid %}btn--primary{% else %}btn--secondary{% endif %}">
+      {{ acc.alias }}
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if ssh_keys and ssh_keys | length > 0 %}
+  <div class="card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Key</th>
+          <th>Account</th>
+          <th>Type</th>
+          <th>Fingerprint</th>
+          <th>Status</th>
+          <th>Last Tested</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for key in ssh_keys %}
+        <tr>
+          <td>
+            <div class="flex items-center gap-3">
+              <span class="ssh-key-indicator ssh-key-indicator--{% if key.last_test_status == 'Success' %}active{% elif key.last_test_status == 'Failed' %}failed{% else %}inactive{% endif %}"></span>
+              <div>
+                <div class="font-medium text-sm">{{ key.name }}</div>
+                {% if key.is_active %}
+                  <span class="badge badge--success" style="font-size:10px;padding:1px 5px;">active</span>
+                {% endif %}
+              </div>
+            </div>
+          </td>
+          <td class="text-sm">{{ key.account_alias | default(value="—") }}</td>
+          <td><span class="badge badge--neutral">{{ key.key_type }}</span></td>
+          <td class="font-mono text-xs text-muted" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;">
+            {{ key.fingerprint | truncate(length=24) }}
+          </td>
+          <td>
+            {% if key.last_test_status == "Success" %}
+              <span class="badge badge--success">Verified</span>
+            {% elif key.last_test_status == "Failed" %}
+              <span class="badge badge--error">Failed</span>
+            {% else %}
+              <span class="badge badge--neutral">Not tested</span>
+            {% endif %}
+          </td>
+          <td class="text-xs text-muted">{{ key.last_tested_at | default(value="Never") }}</td>
+          <td>
+            <div class="flex items-center gap-2">
+              <a href="/ssh/test?account={{ key.account_id }}" class="btn btn--secondary btn--sm">Test</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state card">
+    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+    </svg>
+    <h2 class="empty-state-title">No SSH Keys</h2>
+    <p class="empty-state-description">Generate a key pair for each account to enable SSH-based git operations.</p>
+    <a href="/ssh/generate" class="btn btn--primary">Generate First Key</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

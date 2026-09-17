@@ -1,0 +1,33 @@
+# Git Manager — Cargo Deny Configuration
+# Run: cargo deny check all
+
+[advisories]
+severity-threshold = "high"
+
+[licenses]
+unlicensed = "deny"
+allow-osi-fsf-free = "neither"
+deny = ["GPL-3.0", "GPL-2.0", "LGPL-3.0", "LGPL-2.1", "AGPL-3.0", "SSPL-1.0"]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-DFS-2016",
+    "CC0-1.0",
+    "Zlib",
+    "MPL-2.0",
+    "OpenSSL",
+]
+confidence-threshold = 0.8
+exceptions = [
+    { name = "ring", allow = ["OpenSSL"] },
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

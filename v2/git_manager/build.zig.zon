@@ -1,0 +1,28 @@
+.{
+    // Root workspace Zig package manifest.
+    // This is the Zig equivalent of the root Cargo.toml's [workspace] section.
+    // It declares the top-level project name and declares zig_native as a
+    // local path dependency so that `b.dependency("zig_native", ...)` in
+    // build.zig resolves correctly.
+    .name    = "git_manager",
+    .version = "0.1.0",
+
+    .dependencies = .{
+        // zig_native is a LOCAL path dependency — no content hash needed.
+        // Path dependencies are resolved relative to this file's directory.
+        // When build.zig calls b.dependency("zig_native", .{...}), Zig reads
+        // zig_native/build.zig.zon to confirm it is a valid Zig package.
+        .zig_native = .{
+            .path = "zig_native",
+        },
+    },
+
+    // The paths that are included when this package is published or used as
+    // a dependency. We include zig_native/ so that consumers of this package
+    // also get the native layer sources.
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "zig_native/",
+    },
+}

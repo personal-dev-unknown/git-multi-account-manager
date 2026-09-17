@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Clone Repository{% endblock %}
+
+{% block topbar_left %}
+<nav class="breadcrumb">
+  <a href="/">Home</a><span class="breadcrumb-sep">/</span>
+  <a href="/repositories">Repositories</a><span class="breadcrumb-sep">/</span>
+  <span class="breadcrumb-current">Clone</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Clone Repository</h1>
+    <p class="page-subtitle">Clone a remote repository using an account's SSH key</p>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="card card--elevated" style="max-width:var(--content-narrow);">
+    <div class="card-body">
+
+      {% if error %}
+      <div class="alert alert--error mb-4" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+        <div class="alert-body">{{ error }}</div>
+      </div>
+      {% endif %}
+
+      <form method="POST" action="/repositories/clone" novalidate>
+
+        <!-- Repository URL -->
+        <div class="form-group">
+          <label class="form-label" for="url">Repository URL <span aria-hidden="true" style="color:var(--color-error)">*</span></label>
+          <input type="text" id="url" name="url" class="input input--mono"
+                 value="{{ form.url | default(value='') }}"
+                 placeholder="git@github.com:owner/repo.git"
+                 required aria-describedby="url-hint">
+          <p id="url-hint" class="form-hint">
+            SSH URL format (recommended): <code>git@github.com:owner/repo.git</code><br>
+            HTTPS URL format: <code>https://github.com/owner/repo.git</code>
+          </p>
+        </div>
+
+        <!-- Account -->
+        <div class="form-group">
+          <label class="form-label" for="account_uuid">Account <span aria-hidden="true" style="color:var(--color-error)">*</span></label>
+          <select id="account_uuid" name="account_uuid" class="select" required aria-describedby="account-hint">
+            <option value="">— Select account —</option>
+            {% for acc in accounts %}
+            <option value="{{ acc.uuid }}"
+                    {% if form.account_uuid == acc.uuid %}selected{% endif %}>
+              {{ acc.alias }} — {{ acc.platform_name | default(value="unknown") }}
+              {% if not acc.has_active_ssh_key %} (no SSH key){% endif %}
+            </option>
+            {% endfor %}
+          </select>
+          <p id="account-hint" class="form-hint">This account's SSH key is used for authentication.</p>
+        </div>
+
+        <!-- Local destination path -->
+        <div class="form-group">
+          <label class="form-label" for="destination">Local Destination Path</label>
+          <input type="text" id="destination" name="destination" class="input input--mono"
+                 value="{{ form.destination | default(value='') }}"
+                 placeholder="~/git-repos/repo-name (inferred from URL if blank)"
+                 aria-describedby="dest-hint">
+          <p id="dest-hint" class="form-hint">
+            Leave blank to clone into <code>~/git-repos/{repo-name}</code>.
+            The parent directory must exist or will be created automatically.
+          </p>
+        </div>
+
+        <!-- Branch -->
+        <div class="form-group">
+          <label class="form-label" for="branch">Branch (optional)</label>
+          <input type="text" id="branch" name="branch" class="input"
+                 value="{{ form.branch | default(value='') }}"
+                 placeholder="Clone default branch if blank">
+        </div>
+
+        <!-- Options -->
+        <div class="form-group">
+          <label class="flex items-center gap-2 text-sm" style="cursor:pointer;margin-bottom:var(--space-2);">
+            <input type="checkbox" name="shallow" value="1"
+                   {% if form.shallow %}checked{% endif %} />
+            Shallow clone (depth=1) — faster for large repositories, omits full history
+          </label>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex justify-end gap-3 mt-6">
+          <a href="/repositories" class="btn btn--secondary">Cancel</a>
+          <button type="submit" class="btn btn--primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Clone Repository
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- SSH URL guide -->
+  <div class="card mt-6" style="max-width:var(--content-narrow);">
+    <div class="card-header"><span class="card-title">How Git Manager handles SSH URLs</span></div>
+    <div class="card-body">
+      <p class="text-sm mb-4" style="line-height:var(--leading-relaxed);">
+        When you use an SSH URL, Git Manager rewrites it to use the account's SSH config
+        host alias. For example, a URL like <code>git@github.com:owner/repo.git</code>
+        for the account with alias <strong>work</strong> becomes
+        <code>git@github.com-work:owner/repo.git</code>. This makes git use the correct
+        <code>~/.ssh/config</code> Host entry and therefore the correct private key.
+      </p>
+      <div class="code-block">
+        <pre><code># ~/.ssh/config entry for the "work" GitHub account
+Host github.com-work
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519_github_work
+  IdentitiesOnly yes</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accounts without SSH keys warning -->
+  {% if accounts_without_keys is defined and accounts_without_keys | length > 0 %}
+  <div class="alert alert--warning mt-5" style="max-width:var(--content-narrow);">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <div class="alert-body">
+      <p class="alert-title">Some accounts have no SSH key</p>
+      The following accounts cannot be used for SSH cloning until they have a key:
+      <ul style="list-style:disc;padding-left:var(--space-5);margin-top:var(--space-2);">
+        {% for acc in accounts_without_keys %}
+        <li><a href="/ssh/generate?account={{ acc.uuid }}">{{ acc.alias }}</a> — generate an SSH key</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
