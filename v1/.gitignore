@@ -58,3 +58,14 @@ Thumbs.db
 config.json
 accounts.json
 .env
+
+# Build artifacts
+*.snap
+*.exe
+*.exe.spec
+
+# Logs
+*.txt
+
+# Exit
+exit/
