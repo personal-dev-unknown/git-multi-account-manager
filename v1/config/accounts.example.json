@@ -1,0 +1,30 @@
+{
+  "github": [
+    {
+      "name": "work",
+      "username": "myusername",
+      "email": "work@example.com",
+      "host": "github.com-work",
+      "ssh_key_path": "~/.ssh/id_ed25519_work",
+      "description": "Work GitHub account"
+    },
+    {
+      "name": "personal",
+      "username": "mypersonal",
+      "email": "personal@example.com",
+      "host": "github.com-personal",
+      "ssh_key_path": "~/.ssh/id_ed25519_personal",
+      "description": "Personal GitHub account"
+    }
+  ],
+  "gitlab": [
+    {
+      "name": "freelance",
+      "username": "myfreelance",
+      "email": "freelance@example.com",
+      "host": "gitlab.com-freelance",
+      "ssh_key_path": "~/.ssh/id_ed25519_freelance",
+      "description": "Freelance GitLab account"
+    }
+  ]
+}

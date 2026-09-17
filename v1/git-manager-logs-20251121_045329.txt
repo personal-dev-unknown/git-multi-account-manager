@@ -1,0 +1,128 @@
+
+================================================================================
+File: activity.log
+================================================================================
+
+[2025-11-21 04:09:06] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:09:35] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:09:42] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:09:48] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:09:53] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:10:08] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+{"timestamp": "2025-11-21T04:10:16.707794", "level": "INFO", "category": "activity", "logger": "git_manager.cli.app", "message": "Starting Git Multi-Account Manager v1.0.0", "module": "app", "function": "cli", "line": 52}
+[2025-11-21 04:11:04] [DEBUG   ] [activity] This is a debug message
+[2025-11-21 04:11:04] [INFO    ] [activity] This is an info message
+[2025-11-21 04:11:04] [WARNING ] [activity] This is a warning message
+[2025-11-21 04:11:04] [ERROR   ] [activity] This is an error message
+[2025-11-21 04:13:14] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:13:46] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:14:23] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:14:31] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:14:31] [DEBUG   ] [activity] Debug mode enabled
+[2025-11-21 04:28:35] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:28:35] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:31:30] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:37:33] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:41:27] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:41:49] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:42:45] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:43:17] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:44:00] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:44:20] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:44:40] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:45:17] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:45:54] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:46:16] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:46:30] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:48:20] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:48:29] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:49:05] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:50:52] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:52:37] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+[2025-11-21 04:53:29] [INFO    ] [activity] Starting Git Multi-Account Manager v1.0.0
+
+
+
+================================================================================
+File: audit.log
+================================================================================
+
+[2025-11-21 04:11:04] [INFO    ] [audit] Operation: git_clone | Status: success
+[2025-11-21 04:11:04] [INFO    ] [audit] Operation: git_push | Status: failure
+[2025-11-21 04:11:04] [INFO    ] [audit] Operation: ssh_connect | Status: success
+[2025-11-21 04:11:04] [INFO    ] [audit] Operation: ssh_generate_key | Status: failure
+[2025-11-21 04:11:04] [INFO    ] [audit] Operation: security_ssh_key_generated | Status: logged
+[2025-11-21 04:11:04] [INFO    ] [audit] Operation: security_account_configured | Status: logged
+[2025-11-21 04:11:04] [INFO    ] [audit] Demo message: Audit event
+
+
+
+================================================================================
+File: error.log
+================================================================================
+
+[2025-11-21 04:11:04] [ERROR   ] [error] Exception in simulated_error: Simulated error for demo
+Traceback (most recent call last):
+  File "/home/devchigarlicmosesrouting/Documents/zanabuni/github_helper_ssh/git-multi-account-manager/src/git_manager/utils/log_utils.py", line 121, in wrapper
+    return func(*args, **kwargs)
+  File "/home/devchigarlicmosesrouting/Documents/zanabuni/github_helper_ssh/git-multi-account-manager/examples/logging_demo.py", line 139, in simulated_error
+    raise ValueError("Simulated error for demo")
+ValueError: Simulated error for demo
+[2025-11-21 04:11:04] [INFO    ] [error] Demo message: General activity
+[2025-11-21 04:11:04] [INFO    ] [error] Demo message: Error message
+
+
+
+================================================================================
+File: git_operation.log
+================================================================================
+
+[2025-11-21 04:11:04] [INFO    ] [git_operation] Git clone on https://github.com/user/repo: success
+[2025-11-21 04:11:04] [ERROR   ] [git_operation] Git push on my-repo: failure - Permission denied (publickey)
+[2025-11-21 04:11:04] [INFO    ] [git_operation] Starting: simulated_clone
+[2025-11-21 04:11:04] [INFO    ] [git_operation] Completed: simulated_clone
+
+
+
+================================================================================
+File: performance.log
+================================================================================
+
+[2025-11-21 04:11:04] [INFO    ] [performance] Starting: simulated_push
+[2025-11-21 04:11:04] [WARNING ] [performance] Operation: simulated_push | Duration: 200.23ms
+[2025-11-21 04:11:04] [INFO    ] [performance] Operation: account_created | Status: success | User: john_doe
+[2025-11-21 04:11:04] [INFO    ] [performance] Operation: ssh_key_rotated | Status: success | User: jane_doe
+[2025-11-21 04:11:04] [INFO    ] [performance] Operation: quick_clone | Duration: 250.00ms
+[2025-11-21 04:11:04] [WARNING ] [performance] Operation: large_clone | Duration: 2500.00ms
+
+
+
+================================================================================
+File: security.log
+================================================================================
+
+[2025-11-21 04:11:04] [WARNING ] [security] Security Event: ssh_key_generated
+[2025-11-21 04:11:04] [WARNING ] [security] Security Event: account_configured
+[2025-11-21 04:11:04] [INFO    ] [security] Starting: complex_operation
+[2025-11-21 04:11:04] [INFO    ] [security] Completed: complex_operation (100.28ms)
+[2025-11-21 04:11:04] [INFO    ] [security] Starting: failing_operation
+[2025-11-21 04:11:04] [ERROR   ] [security] Failed: failing_operation - Simulated failure
+Traceback (most recent call last):
+  File "/home/devchigarlicmosesrouting/Documents/zanabuni/github_helper_ssh/git-multi-account-manager/examples/logging_demo.py", line 176, in demo_context_manager
+    raise RuntimeError("Simulated failure")
+RuntimeError: Simulated failure
+[2025-11-21 04:11:04] [INFO    ] [security] Demo message: Security event
+[2025-11-21 04:11:04] [INFO    ] [security] Demo message: Performance metric
+[2025-11-21 04:11:04] [INFO    ] [security] Demo message: Git operation
+
+
+
+================================================================================
+File: ssh_operation.log
+================================================================================
+
+[2025-11-21 04:11:04] [INFO    ] [ssh_operation] SSH connect for github: success
+[2025-11-21 04:11:04] [ERROR   ] [ssh_operation] SSH generate_key for gitlab: failure - Invalid email format
+[2025-11-21 04:11:04] [INFO    ] [ssh_operation] Demo message: SSH operation
+
+

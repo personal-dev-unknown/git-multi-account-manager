@@ -1,0 +1,115 @@
+<!-- src/git_manager/web/templates/accounts/detail.html -->
+{% extends "base.html" %}
+
+{% block title %}Account Details - Git Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 id="account-name">Loading...</h2>
+        <button class="btn btn-primary" onclick="testConnection()">Test Connection</button>
+        <button class="btn btn-danger" onclick="deleteAccount()">Delete</button>
+    </div>
+    <div class="card-body">
+        <div class="detail-grid">
+            <div class="detail-item">
+                <label>Platform:</label>
+                <span id="platform"></span>
+            </div>
+            <div class="detail-item">
+                <label>Username:</label>
+                <span id="username"></span>
+            </div>
+            <div class="detail-item">
+                <label>Email:</label>
+                <span id="email"></span>
+            </div>
+            <div class="detail-item">
+                <label>SSH Host:</label>
+                <span id="host"></span>
+            </div>
+            <div class="detail-item">
+                <label>SSH Key:</label>
+                <span id="ssh_key"></span>
+            </div>
+            <div class="detail-item">
+                <label>Description:</label>
+                <span id="description"></span>
+            </div>
+        </div>
+
+        <div id="connection-status" class="alert" style="display: none; margin-top: 20px;"></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Repositories Using This Account</h3>
+    </div>
+    <div class="card-body">
+        <div id="repositories-list">
+            <p>Loading repositories...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const accountName = new URLSearchParams(window.location.search).get('name');
+
+async function loadAccountDetails() {
+    try {
+        const account = await apiRequest(`/api/v1/accounts/${accountName}`);
+        
+        document.getElementById('account-name').textContent = account.name;
+        document.getElementById('platform').textContent = account.platform;
+        document.getElementById('username').textContent = account.username;
+        document.getElementById('email').textContent = account.email;
+        document.getElementById('host').textContent = account.host;
+        document.getElementById('ssh_key').textContent = account.ssh_key_path;
+        document.getElementById('description').textContent = account.description || '-';
+    } catch (error) {
+        showNotification('Failed to load account details', 'error');
+    }
+}
+
+async function testConnection() {
+    const statusDiv = document.getElementById('connection-status');
+    statusDiv.style.display = 'block';
+    statusDiv.className = 'alert alert-info';
+    statusDiv.textContent = 'Testing connection...';
+    
+    try {
+        const result = await apiRequest(`/api/v1/accounts/${accountName}/test`, 'POST');
+        
+        if (result.success) {
+            statusDiv.className = 'alert alert-success';
+            statusDiv.textContent = '✓ Connection successful!';
+        } else {
+            statusDiv.className = 'alert alert-error';
+            statusDiv.textContent = '✗ Connection failed: ' + result.message;
+        }
+    } catch (error) {
+        statusDiv.className = 'alert alert-error';
+        statusDiv.textContent = '✗ Error: ' + error.message;
+    }
+}
+
+async function deleteAccount() {
+    if (!confirm(`Are you sure you want to delete account "${accountName}"?`)) {
+        return;
+    }
+    
+    try {
+        await apiRequest(`/api/v1/accounts/${accountName}`, 'DELETE');
+        showNotification('Account deleted successfully', 'success');
+        setTimeout(() => window.location.href = '/accounts', 1500);
+    } catch (error) {
+        showNotification('Failed to delete account', 'error');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadAccountDetails);
+</script>
+{% endblock %}

@@ -1,0 +1,167 @@
+<!-- src/git_manager/web/templates/repositories/clone.html -->
+{% extends "base.html" %}
+
+{% block title %}Clone Repository - Git Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Clone Repository</h2>
+    </div>
+    <div class="card-body">
+        <form id="cloneForm">
+            <div class="form-group">
+                <label for="clone-type">Clone Type</label>
+                <select class="form-control" id="clone-type" onchange="toggleCloneType()">
+                    <option value="external">External Repository</option>
+                    <option value="personal">Personal Repository</option>
+                </select>
+            </div>
+
+            <div id="external-section">
+                <div class="form-group">
+                    <label for="url">Repository URL *</label>
+                    <input type="text" class="form-control" id="url" name="url" required
+                           placeholder="https://github.com/user/repo or user/repo">
+                    <small>Supports: HTTPS URLs, SSH URLs, or short format (user/repo)</small>
+                </div>
+            </div>
+
+            <div id="personal-section" style="display: none;">
+                <div class="form-group">
+                    <label>Select Repository</label>
+                    <div id="personal-repos" class="repo-list">
+                        <p>Loading repositories...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="account">Account *</label>
+                <select class="form-control" id="account" name="account" required>
+                    <option value="">Loading accounts...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="destination">Destination Directory</label>
+                <input type="text" class="form-control" id="destination" name="destination"
+                       placeholder="Leave empty for current directory">
+            </div>
+
+            <div class="form-group">
+                <label for="branch">Branch</label>
+                <input type="text" class="form-control" id="branch" name="branch"
+                       placeholder="Default branch">
+            </div>
+
+            <div id="clone-progress" style="margin: 20px 0;"></div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Clone</button>
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/repositories'">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedRepo = null;
+
+async function loadAccounts() {
+    const select = document.getElementById('account');
+    try {
+        const accounts = await apiRequest('/api/v1/accounts');
+        select.innerHTML = accounts.map(acc => 
+            `<option value="${acc.name}">${acc.name} (${acc.platform})</option>`
+        ).join('');
+    } catch (error) {
+        select.innerHTML = '<option value="">Error loading accounts</option>';
+    }
+}
+
+function toggleCloneType() {
+    const type = document.getElementById('clone-type').value;
+    const externalSection = document.getElementById('external-section');
+    const personalSection = document.getElementById('personal-section');
+    
+    if (type === 'personal') {
+        externalSection.style.display = 'none';
+        personalSection.style.display = 'block';
+        document.getElementById('url').required = false;
+        loadPersonalRepos();
+    } else {
+        externalSection.style.display = 'block';
+        personalSection.style.display = 'none';
+        document.getElementById('url').required = true;
+    }
+}
+
+async function loadPersonalRepos() {
+    const account = document.getElementById('account').value;
+    if (!account) return;
+    
+    const repoList = document.getElementById('personal-repos');
+    repoList.innerHTML = '<p>Loading repositories...</p>';
+    
+    // This would fetch from GitHub/GitLab API
+    repoList.innerHTML = '<p>Feature coming soon - fetches your repositories from the platform</p>';
+}
+
+document.getElementById('cloneForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    
+    // Remove empty fields
+    Object.keys(data).forEach(key => {
+        if (!data[key]) delete data[key];
+    });
+    
+    const progressDiv = document.getElementById('clone-progress');
+    progressDiv.innerHTML = '<div class="spinner"></div><p>Cloning repository...</p>';
+    
+    try {
+        const cloneType = document.getElementById('clone-type').value;
+        const endpoint = cloneType === 'personal' 
+            ? '/api/v1/clone/personal' 
+            : '/api/v1/clone/external';
+        
+        const cloneData = {
+            account_name: data.account,
+            auth_method: 'ssh',
+            destination: data.destination,
+            recursive: false,
+            shallow: false
+        };
+        
+        if (cloneType === 'external') {
+            cloneData.repo_url = data.url;
+        } else {
+            cloneData.platform = 'github';  // Default, could be dynamic
+            cloneData.repo_name = selectedRepo;
+        }
+        
+        const result = await apiRequest(endpoint, 'POST', cloneData);
+        progressDiv.innerHTML = '<p class="alert alert-success">✓ Repository cloned successfully!</p>';
+        showNotification('Repository cloned to ' + result.destination, 'success');
+        setTimeout(() => window.location.href = '/repositories', 2000);
+    } catch (error) {
+        progressDiv.innerHTML = '<p class="alert alert-error">✗ Clone failed: ' + error.message + '</p>';
+    }
+});
+
+document.getElementById('account').addEventListener('change', () => {
+    const type = document.getElementById('clone-type').value;
+    if (type === 'personal') {
+        loadPersonalRepos();
+    }
+});
+
+document.addEventListener('DOMContentLoaded', loadAccounts);
+</script>
+{% endblock %}

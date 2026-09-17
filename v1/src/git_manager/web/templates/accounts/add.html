@@ -1,0 +1,93 @@
+<!-- src/git_manager/web/templates/accounts/add.html -->
+{% extends "base.html" %}
+
+{% block title %}Add Account - Git Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Add New Account</h2>
+    </div>
+    <div class="card-body">
+        <form id="addAccountForm" class="form">
+            <div class="form-group">
+                <label for="name">Account Name *</label>
+                <input type="text" class="form-control" id="name" name="name" required
+                       placeholder="e.g., work, personal">
+                <small>Unique identifier for this account</small>
+            </div>
+
+            <div class="form-group">
+                <label for="platform">Platform *</label>
+                <select class="form-control" id="platform" name="platform" required>
+                    <option value="">Select platform...</option>
+                    <option value="github">GitHub</option>
+                    <option value="gitlab">GitLab</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="username">Username *</label>
+                <input type="text" class="form-control" id="username" name="username" required
+                       placeholder="Platform username">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" class="form-control" id="email" name="email" required
+                       placeholder="user@example.com">
+            </div>
+
+            <div class="form-group">
+                <label for="ssh_key_path">SSH Key Path *</label>
+                <input type="text" class="form-control" id="ssh_key_path" name="ssh_key_path" required
+                       placeholder="~/.ssh/id_ed25519_work">
+                <small>Path to your SSH private key</small>
+            </div>
+
+            <div class="form-group">
+                <label for="host">Custom SSH Host</label>
+                <input type="text" class="form-control" id="host" name="host"
+                       placeholder="github.com-work">
+                <small>Leave empty to use default (platform.com-name)</small>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3"
+                          placeholder="Optional description"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Add Account</button>
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/accounts'">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('addAccountForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    
+    // Remove empty optional fields
+    Object.keys(data).forEach(key => {
+        if (!data[key]) delete data[key];
+    });
+    
+    try {
+        await apiRequest('/api/v1/accounts', 'POST', data);
+        showNotification('Account added successfully!', 'success');
+        setTimeout(() => window.location.href = '/accounts', 1500);
+    } catch (error) {
+        showNotification('Failed to add account: ' + error.message, 'error');
+    }
+});
+</script>
+{% endblock %}

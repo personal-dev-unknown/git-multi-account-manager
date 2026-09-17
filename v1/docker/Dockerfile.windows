@@ -1,0 +1,26 @@
+# Use the official Python Windows Server Core image
+FROM mcr.microsoft.com/windows:ltsc2022
+
+# Install Python and build tools
+RUN powershell -Command "\
+    $ErrorActionPreference = 'Stop' ; \
+    $ProgressPreference = 'SilentlyContinue' ; \
+    Invoke-WebRequest -UseBasicParsing https://www.python.org/ftp/python/3.13.0/python-3.13.0-amd64.exe -OutFile python-installer.exe ; \
+    Start-Process python-installer.exe -ArgumentList '/quiet InstallAllUsers=1 PrependPath=1' -Wait ; \
+    Remove-Item python-installer.exe ; \
+    pip install --upgrade pip"
+
+# Set up the working directory
+WORKDIR C:\\app
+
+# Copy requirements first to leverage Docker cache
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+# Copy the rest of the application
+COPY . .
+
+# Build the Windows executable
+RUN python scripts/build.py windows
+
+# The output will be in C:\app\dist\git-manager.exe

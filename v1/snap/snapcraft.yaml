@@ -1,0 +1,474 @@
+name: git-manager
+base: core24
+version: '1.0.0'
+title: Git Multi-Account Manager
+summary: Manage multiple Git accounts seamlessly with enterprise-grade features
+description: |
+  Git Multi-Account Manager is a professional-grade tool for managing multiple Git accounts
+  on a single machine. Perfect for developers, DevOps engineers, and teams working with
+  multiple Git identities.
+  
+  🚀 Key Features:
+  - Seamless multi-account management across GitHub, GitLab, Bitbucket, and more
+  - SSH key generation, configuration, and secure management
+  - Repository cloning with automatic account detection
+  - Account-specific Git configuration (name, email, signing keys)
+  - Secure credential handling with encrypted storage
+  - Cross-platform compatibility (Linux, macOS, Windows via WSL)
+  - CLI and optional web interface
+  - Integration with Git hooks and workflows
+  - Backup and restore account configurations
+  - Team collaboration features
+  
+  📦 What's New in v2.1.0:
+  - Enhanced SSH key management with ED25519 support
+  - Improved account switching performance
+  - New configuration validation and migration tools
+  - Better error reporting and diagnostics
+  - Web UI for visual account management (optional)
+  - Support for GPG signing key management
+  
+  🔒 Security:
+  - Encrypted credential storage
+  - Secure SSH key handling
+  - No plaintext password storage
+  - Audit logging for account operations
+  
+  💡 Perfect For:
+  - Freelancers managing client repositories
+  - Developers with work and personal accounts
+  - Teams needing consistent Git configurations
+  - DevOps engineers managing multiple environments
+
+license: MIT
+contact: support@git-manager.dev
+website: https://github.com/Zanabuni/git-multi-account-manager
+source-code: https://github.com/Zanabuni/git-multi-account-manager
+issues: https://github.com/Zanabuni/git-multi-account-manager/issues
+donation: https://github.com/sponsors/Zanabuni
+
+grade: stable
+confinement: strict
+compression: lzo
+
+platforms:
+  amd64:
+  arm64:
+
+assumes:
+  - snapd2.55
+
+
+# Application definitions
+apps:
+  # Main CLI interface
+  git-manager:
+    command: usr/local/bin/git-manager
+    environment:
+      PATH: $SNAP/usr/bin:$SNAP/bin:$PATH
+      PYTHONPATH: $SNAP/lib/python3.12/site-packages:$SNAP/usr/lib/python3/dist-packages:$PYTHONPATH
+      SNAP_REAL_HOME: $HOME
+      GIT_MANAGER_CONFIG_DIR: $SNAP_USER_DATA/.config/git-manager
+      GIT_MANAGER_DATA_DIR: $SNAP_USER_DATA/.local/share/git-manager
+      GIT_MANAGER_CACHE_DIR: $SNAP_USER_COMMON/.cache/git-manager
+      SSH_CONFIG_DIR: $HOME/.ssh
+      GIT_MANAGER_LOG_LEVEL: INFO
+    plugs:
+      - home
+      - network
+      - network-bind
+      - ssh-keys
+      - dot-ssh-config
+      - dot-gitconfig
+      - removable-media
+    slots:
+      - dbus-interface
+  
+  # CLI-specific command for direct access
+  cli:
+    command: usr/local/bin/git-manager-cli
+    environment:
+      PATH: $SNAP/usr/bin:$SNAP/bin:$PATH
+      PYTHONPATH: $SNAP/lib/python3.12/site-packages:$SNAP/usr/lib/python3/dist-packages:$PYTHONPATH
+      GIT_MANAGER_CONFIG_DIR: $SNAP_USER_DATA/.config/git-manager
+      GIT_MANAGER_CLI_MODE: "true"
+    plugs:
+      - home
+      - network
+      - ssh-keys
+      - dot-ssh-config
+      - dot-gitconfig
+  
+  # Web interface (optional)
+  web:
+    command: usr/local/bin/git-manager-web
+    daemon: simple
+    restart-condition: on-failure
+    restart-delay: 5s
+    stop-timeout: 30s
+    environment:
+      PYTHONPATH: $SNAP/lib/python3.12/site-packages:$SNAP/usr/lib/python3/dist-packages:$PYTHONPATH
+      GIT_MANAGER_CONFIG_DIR: $SNAP_USER_DATA/.config/git-manager
+      GIT_MANAGER_WEB_HOST: "127.0.0.1"
+      GIT_MANAGER_WEB_PORT: "8080"
+      GIT_MANAGER_WEB_ENABLED: "true"
+    plugs:
+      - home
+      - network
+      - network-bind
+      - ssh-keys
+      - dot-ssh-config
+  
+  # Desktop GUI application
+  desktop:
+    command: usr/local/bin/git-manager-desktop
+    environment:
+      PYTHONPATH: $SNAP/lib/python3.12/site-packages:$SNAP/usr/lib/python3/dist-packages:$PYTHONPATH
+      GIT_MANAGER_CONFIG_DIR: $SNAP_USER_DATA/.config/git-manager
+      GIT_MANAGER_DATA_DIR: $SNAP_USER_DATA/.local/share/git-manager
+    plugs:
+      - home
+      - network
+      - ssh-keys
+      - dot-ssh-config
+      - dot-gitconfig
+      - removable-media
+  
+  # Background daemon for monitoring and automation
+  daemon:
+    command: usr/local/bin/git-manager-daemon
+    daemon: simple
+    restart-condition: on-failure
+    restart-delay: 10s
+    stop-timeout: 30s
+    environment:
+      PYTHONPATH: $SNAP/lib/python3.12/site-packages:$SNAP/usr/lib/python3/dist-packages:$PYTHONPATH
+      GIT_MANAGER_CONFIG_DIR: $SNAP_USER_DATA/.config/git-manager
+      GIT_MANAGER_DAEMON_INTERVAL: "300"
+    plugs:
+      - home
+      - network
+      - network-bind
+      - ssh-keys
+      - dot-ssh-config
+  
+  # Utility commands
+  version:
+    command: usr/local/bin/git-manager-version
+    environment:
+      PYTHONPATH: $SNAP/lib/python3.12/site-packages:$SNAP/usr/lib/python3/dist-packages:$PYTHONPATH
+  
+  doctor:
+    command: usr/local/bin/git-manager-doctor
+    environment:
+      PYTHONPATH: $SNAP/lib/python3.12/site-packages:$SNAP/usr/lib/python3/dist-packages:$PYTHONPATH
+      GIT_MANAGER_CONFIG_DIR: $SNAP_USER_DATA/.config/git-manager
+    plugs:
+      - home
+      - network
+      - ssh-keys
+      - dot-ssh-config
+      - dot-gitconfig
+
+
+# Build parts
+parts:
+  # Python dependencies and environment
+  python-deps:
+    plugin: nil
+    build-packages:
+      - python3-dev
+      - python3-pip
+      - python3-venv
+      - build-essential
+      - libssl-dev
+      - libffi-dev
+      - pkg-config
+    stage-packages:
+      - python3-minimal
+      - python3-pkg-resources
+      - python3-pip
+      - python3-setuptools
+      - python3-wheel
+      - libpython3.12
+      - libpython3.12-stdlib
+    override-build: |
+      craftctl default
+      echo "✅ Python dependencies prepared"
+  
+  # Main application
+  git-manager:
+    after: [python-deps]
+    plugin: python
+    source: .
+    source-type: local
+    build-packages:
+      - git
+      - openssh-client
+      - curl
+      - wget
+      - gnupg
+    stage-packages:
+      - git
+      - openssh-client
+      - ca-certificates
+      - gnupg
+      - gpg-agent
+      - libc6
+      - libgcc-s1
+      - libstdc++6
+      - libssl3
+    python-packages:
+      - pip>=23.0
+      - setuptools>=68.0
+      - wheel>=0.40
+      - click>=8.0.0
+      - rich>=13.0.0
+      - flask>=3.0.0
+      - flask-socketio>=5.3.0
+      - pexpect>=4.9.0
+      - pyyaml>=6.0
+      - python-socketio>=5.10.0
+    override-build: |
+      set -e
+      
+      echo "======================================"
+      echo "  Building Git Multi-Account Manager"
+      echo "======================================"
+      echo ""
+      
+      # Verify source files
+      echo "🔍 Verifying source files..."
+      if [ ! -f setup.py ] && [ ! -f pyproject.toml ]; then
+        echo "❌ ERROR: No setup.py or pyproject.toml found!"
+        exit 1
+      fi
+      
+      if [ ! -d src/git_manager ] && [ ! -d git_manager ]; then
+        echo "❌ ERROR: git_manager package not found!"
+        exit 1
+      fi
+      echo "✅ Source files verified"
+      echo ""
+      
+      # Use default python plugin build
+      echo "🔨 Running Python plugin build..."
+      craftctl default
+      echo "✅ Python plugin build completed"
+      echo ""
+      
+      # Install dependencies from setup.py
+      echo "📦 Installing dependencies..."
+      "${CRAFT_PART_INSTALL}/bin/pip" install --no-cache-dir .
+      echo "✅ Dependencies installed"
+      echo ""
+      
+      # Verify installation
+      echo ""
+      echo "🔍 Verifying installation..."
+      if [ -d "${CRAFT_PART_INSTALL}/lib/python3.12/site-packages/git_manager" ]; then
+        echo "✅ Git Manager module verified"
+      else
+        echo "❌ ERROR: Git Manager module not found after installation!"
+        echo ""
+        echo "Checking installation directories..."
+        ls -la "${CRAFT_PART_INSTALL}/lib/python3.12/site-packages/" || true
+        exit 1
+      fi
+      echo ""
+      
+      # Create binary directories
+      echo "📁 Creating directory structure..."
+      mkdir -p "${CRAFT_PART_INSTALL}/usr/local/bin"
+      mkdir -p "${CRAFT_PART_INSTALL}/etc/git-manager/config"
+      mkdir -p "${CRAFT_PART_INSTALL}/usr/share/doc/git-manager"
+      mkdir -p "${CRAFT_PART_INSTALL}/usr/share/git-manager/templates"
+      mkdir -p "${CRAFT_PART_INSTALL}/usr/share/applications"
+      echo ""
+      
+      # Create main wrapper script
+      echo "📝 Creating wrapper scripts..."
+      mkdir -p "${CRAFT_PART_INSTALL}/usr/local/bin"
+      
+      # Main wrapper using main.py entry point (supports --cli, --web, --desktop)
+      printf '#!/bin/bash\nset -e\nexport PYTHONPATH=$SNAP/lib/python3.12/site-packages:$SNAP/usr/lib/python3/dist-packages:$PYTHONPATH\nexport GIT_MANAGER_CONFIG_DIR=${GIT_MANAGER_CONFIG_DIR:-$SNAP_USER_DATA/.config/git-manager}\nexport GIT_MANAGER_DATA_DIR=${GIT_MANAGER_DATA_DIR:-$SNAP_USER_DATA/.local/share/git-manager}\nmkdir -p "$GIT_MANAGER_CONFIG_DIR"\nmkdir -p "$GIT_MANAGER_DATA_DIR"\nexec python3 -m git_manager.main "$@"\n' > "${CRAFT_PART_INSTALL}/usr/local/bin/git-manager"
+      chmod +x "${CRAFT_PART_INSTALL}/usr/local/bin/git-manager"
+      
+      # CLI-specific wrapper
+      printf '#!/bin/bash\nset -e\nexport PYTHONPATH=$SNAP/lib/python3.12/site-packages:$SNAP/usr/lib/python3/dist-packages:$PYTHONPATH\nexport GIT_MANAGER_CONFIG_DIR=${GIT_MANAGER_CONFIG_DIR:-$SNAP_USER_DATA/.config/git-manager}\nmkdir -p "$GIT_MANAGER_CONFIG_DIR"\nexec python3 -m git_manager.main --cli "$@"\n' > "${CRAFT_PART_INSTALL}/usr/local/bin/git-manager-cli"
+      chmod +x "${CRAFT_PART_INSTALL}/usr/local/bin/git-manager-cli"
+      
+      # Web interface wrapper
+      printf '#!/bin/bash\nset -e\nexport PYTHONPATH=$SNAP/lib/python3.12/site-packages:$SNAP/usr/lib/python3/dist-packages:$PYTHONPATH\nexport GIT_MANAGER_CONFIG_DIR=${GIT_MANAGER_CONFIG_DIR:-$SNAP_USER_DATA/.config/git-manager}\nexport GIT_MANAGER_WEB_HOST=${GIT_MANAGER_WEB_HOST:-127.0.0.1}\nexport GIT_MANAGER_WEB_PORT=${GIT_MANAGER_WEB_PORT:-8080}\nmkdir -p "$GIT_MANAGER_CONFIG_DIR"\necho "Starting Git Manager Web Interface on http://${GIT_MANAGER_WEB_HOST}:${GIT_MANAGER_WEB_PORT}"\nexec python3 -m git_manager.main --web "$@"\n' > "${CRAFT_PART_INSTALL}/usr/local/bin/git-manager-web"
+      chmod +x "${CRAFT_PART_INSTALL}/usr/local/bin/git-manager-web"
+      
+      # Desktop wrapper
+      printf '#!/bin/bash\nset -e\nexport PYTHONPATH=$SNAP/lib/python3.12/site-packages:$SNAP/usr/lib/python3/dist-packages:$PYTHONPATH\nexport GIT_MANAGER_CONFIG_DIR=${GIT_MANAGER_CONFIG_DIR:-$SNAP_USER_DATA/.config/git-manager}\nmkdir -p "$GIT_MANAGER_CONFIG_DIR"\nexec python3 -m git_manager.main --desktop "$@"\n' > "${CRAFT_PART_INSTALL}/usr/local/bin/git-manager-desktop"
+      chmod +x "${CRAFT_PART_INSTALL}/usr/local/bin/git-manager-desktop"
+      
+      # Version command
+      printf '#!/bin/bash\nexport PYTHONPATH=$SNAP/lib/python3.12/site-packages:$SNAP/usr/lib/python3/dist-packages:$PYTHONPATH\npython3 -c "import git_manager; print(f'"'"'Git Manager v{git_manager.__version__}'"'"')"\n' > "${CRAFT_PART_INSTALL}/usr/local/bin/git-manager-version"
+      chmod +x "${CRAFT_PART_INSTALL}/usr/local/bin/git-manager-version"
+      
+      # Doctor/diagnostic command
+      printf '#!/bin/bash\nset -e\nexport PYTHONPATH=$SNAP/lib/python3.12/site-packages:$SNAP/usr/lib/python3/dist-packages:$PYTHONPATH\nexport GIT_MANAGER_CONFIG_DIR=${GIT_MANAGER_CONFIG_DIR:-$SNAP_USER_DATA/.config/git-manager}\nexec python3 -m git_manager.cli.doctor "$@"\n' > "${CRAFT_PART_INSTALL}/usr/local/bin/git-manager-doctor"
+      chmod +x "${CRAFT_PART_INSTALL}/usr/local/bin/git-manager-doctor"
+      
+      echo "✅ Wrapper scripts created"
+      echo ""
+      
+      # Copy configuration examples
+      echo "📋 Installing configuration examples..."
+      if [ -d config ]; then
+        find config -type f \( -name "*.example.*" -o -name "*.sample.*" \) -exec \
+          install -D -m 644 {} "${CRAFT_PART_INSTALL}/etc/git-manager/config/{}" \;
+      fi
+      
+      # Install documentation
+      echo "📚 Installing documentation..."
+      for doc in README.md LICENSE CHANGELOG.md CONTRIBUTING.md; do
+        if [ -f "$doc" ]; then
+          install -D -m 644 "$doc" "${CRAFT_PART_INSTALL}/usr/share/doc/git-manager/$doc"
+        fi
+      done
+      
+      # Copy docs directory if exists
+      if [ -d docs ]; then
+        cp -r docs "${CRAFT_PART_INSTALL}/usr/share/doc/git-manager/" || true
+      fi
+      
+      echo ""
+      echo "======================================"
+      echo "✅ Snap build completed successfully!"
+      echo "======================================"
+      echo ""
+      echo "Installed files:"
+      ls -lh "${CRAFT_PART_INSTALL}/usr/local/bin/" || true
+      echo ""
+    
+    override-prime: |
+      craftctl default
+      
+      echo "🔧 Optimizing snap size..."
+      
+      # Remove unnecessary Python files
+      echo "  • Removing test files..."
+      find "$CRAFT_PRIME" -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+      find "$CRAFT_PRIME" -type d -name "test" -exec rm -rf {} + 2>/dev/null || true
+      find "$CRAFT_PRIME" -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
+      find "$CRAFT_PRIME" -name "*.pyc" -delete 2>/dev/null || true
+      find "$CRAFT_PRIME" -name "*.pyo" -delete 2>/dev/null || true
+      
+      # Remove documentation from packages (keep our docs)
+      echo "  • Removing package documentation..."
+      rm -rf "$CRAFT_PRIME"/usr/share/doc/python* || true
+      rm -rf "$CRAFT_PRIME"/usr/share/man || true
+      rm -rf "$CRAFT_PRIME"/usr/lib/python*/pydoc_data || true
+      
+      # Remove unnecessary locale files
+      echo "  • Removing extra locales..."
+      if [ -d "$CRAFT_PRIME/usr/share/locale" ]; then
+        find "$CRAFT_PRIME/usr/share/locale" -mindepth 1 -maxdepth 1 ! -name 'en*' -exec rm -rf {} + 2>/dev/null || true
+      fi
+      
+      # Strip binaries
+      echo "  • Stripping binaries..."
+      find "$CRAFT_PRIME" -type f -executable -exec strip --strip-unneeded {} \; 2>/dev/null || true
+      
+      # Calculate and report size
+      SNAP_SIZE=$(du -sh "$CRAFT_PRIME" | cut -f1)
+      echo ""
+      echo "✅ Optimization complete"
+      echo "📦 Snap size: $SNAP_SIZE"
+      echo ""
+      
+      # Verify critical files
+      echo "🔍 Verifying snap integrity..."
+      ERRORS=0
+      
+      if [ ! -f "$CRAFT_PRIME/usr/local/bin/git-manager" ]; then
+        echo "❌ ERROR: Main executable not found!"
+        ERRORS=$((ERRORS + 1))
+      fi
+      
+      if [ ! -d "$CRAFT_PRIME/lib/python3.12/site-packages" ]; then
+        echo "⚠️  WARNING: Python site-packages not found!"
+      fi
+      
+      if [ $ERRORS -gt 0 ]; then
+        echo "❌ Snap verification failed with $ERRORS errors"
+        exit 1
+      fi
+      
+      echo "✅ Snap integrity verified"
+      echo ""
+  
+  # Desktop file integration
+  desktop-integration:
+    plugin: dump
+    source: snap/local/
+    organize:
+      'git-manager.desktop': usr/share/applications/git-manager.desktop
+      '68ccba68-8ef8-4b04-8163-01767b152a04.png': usr/share/icons/hicolor/256x256/apps/git-manager.png
+    stage:
+      - usr/share/applications/git-manager.desktop
+      - usr/share/icons/hicolor/256x256/apps/git-manager.png
+    prime:
+      - usr/share/applications/git-manager.desktop
+      - usr/share/icons/hicolor/256x256/apps/git-manager.png
+
+# Plugs for system integration
+plugs:
+  # SSH configuration access
+  dot-ssh-config:
+    interface: personal-files
+    read:
+      - $HOME/.ssh/config
+      - $HOME/.ssh/known_hosts
+    write:
+      - $HOME/.ssh/config
+      - $HOME/.ssh/known_hosts
+  
+  # SSH keys (read-only for security)
+  ssh-keys:
+    interface: personal-files
+    read:
+      - $HOME/.ssh
+  
+  # Git global configuration
+  dot-gitconfig:
+    interface: personal-files
+    read:
+      - $HOME/.gitconfig
+    write:
+      - $HOME/.gitconfig
+
+# Slots for service exposure
+slots:
+  dbus-interface:
+    interface: dbus
+    bus: session
+    name: dev.gitmanager.Manager
+
+# Layouts for path mapping
+layout:
+  /etc/git-manager:
+    bind: $SNAP/etc/git-manager
+  /usr/share/git-manager:
+    bind: $SNAP/usr/share/git-manager
+
+# Hooks for lifecycle management
+hooks:
+  install:
+    plugs:
+      - home
+  
+  post-refresh:
+    plugs:
+      - home
+  
+  configure:
+    plugs:
+      - home
+      - dot-ssh-config
+      - dot-gitconfig

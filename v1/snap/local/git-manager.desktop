@@ -1,0 +1,19 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Git Manager
+GenericName=Git Account Manager
+Comment=Manage multiple Git accounts seamlessly
+Exec=git-manager
+Icon=git-manager
+Terminal=true
+Categories=Development;Utility;
+Keywords=git;account;manager;ssh;repository;
+StartupNotify=true
+MimeType=x-scheme-handler/git;
+NoDisplay=false
+StartupWMClass=git-manager
+X-GNOME-SingleWindow=false
+X-KDE-StartupNotify=false
+X-AppImage-Integrate=false
+Actions=clone;switch;

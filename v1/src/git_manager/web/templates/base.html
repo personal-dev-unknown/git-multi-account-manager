@@ -1,0 +1,42 @@
+<!-- src/git_manager/web/templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Git Manager{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>{{ app_name }} <span style="font-size: 0.5em;">v{{ version }}</span></h1>
+        </div>
+    </div>
+    
+    <nav class="nav">
+        <div class="container">
+            <ul>
+                <li><a href="/">Dashboard</a></li>
+                <li><a href="/accounts">Accounts</a></li>
+                <li><a href="/repositories">Repositories</a></li>
+                <li><a href="/ssh">SSH Keys</a></li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer style="text-align: center; padding: 20px; color: #999;">
+        <p>&copy; 2025 Git Multi-Account Manager. All rights reserved.</p>
+    </footer>
+    
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

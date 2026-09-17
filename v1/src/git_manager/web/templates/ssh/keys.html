@@ -1,0 +1,310 @@
+<!-- src/git_manager/web/templates/ssh/keys_updated.html -->
+{% extends "base.html" %}
+
+{% block title %}SSH Keys - Git Manager{% endblock %}
+
+{% block extra_js %}
+    <script src="{{ url_for('static', filename='js/ssh.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2>SSH Keys</h2>
+        <div>
+            <button class="btn btn-primary" onclick="showGenerateModal()">
+                <i class="fas fa-key"></i> Generate New Key
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="ssh-keys-table">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Path</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="5" class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            Loading SSH keys...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Generate Key Modal -->
+<div id="generateModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Generate SSH Key</h3>
+            <span class="close" onclick="closeGenerateModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="generateForm">
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" class="form-control" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Key Name:</label>
+                    <input type="text" class="form-control" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Key Type:</label>
+                    <select class="form-control" name="type">
+                        <option value="ed25519">ED25519 (Recommended)</option>
+                        <option value="rsa">RSA</option>
+                        <option value="ecdsa">ECDSA</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Passphrase (optional):</label>
+                    <input type="password" class="form-control" name="passphrase">
+                </div>
+                <div class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-key"></i> Generate
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeGenerateModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </form>
+            
+            <div id="generatedKey" style="display: none; margin-top: 20px;">
+                <h4>Public Key (add to GitHub/GitLab):</h4>
+                <textarea id="publicKeyDisplay" class="form-control" rows="3" readonly></textarea>
+                <button class="btn btn-primary mt-2" onclick="copyPublicKey()">
+                    <i class="far fa-copy"></i> Copy to Clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add to Agent Modal -->
+<div id="addToAgentModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add Key to SSH Agent</h3>
+            <span class="close" onclick="closeAddToAgentModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>SSH Key Path:</label>
+                <input type="text" id="keyPath" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+                <label for="passphrase">Passphrase (if key is encrypted):</label>
+                <input type="password" id="passphrase" class="form-control" placeholder="Leave empty if no passphrase">
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <button type="button" class="btn btn-primary" onclick="addKeyToAgent()" id="addToAgentBtn">
+                    <i class="fas fa-plus-circle"></i> Add to Agent
+                    <span id="addToAgentLoading" style="display: none; margin-left: 5px;">
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span class="sr-only">Loading...</span>
+                    </span>
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="closeAddToAgentModal()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    overflow: auto;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 50%;
+    max-width: 600px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header .close {
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #aaa;
+}
+
+.modal-header .close:hover {
+    color: #000;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 90%;
+        margin: 20% auto;
+    }
+}
+
+/* Table actions */
+.table .actions {
+    white-space: nowrap;
+}
+
+.table .btn {
+    margin-right: 5px;
+}
+
+.table .btn:last-child {
+    margin-right: 0;
+}
+</style>
+
+<script>
+// Generate Key Modal Functions
+function showGenerateModal() {
+    document.getElementById('generateModal').style.display = 'block';
+}
+
+function closeGenerateModal() {
+    document.getElementById('generateModal').style.display = 'none';
+    document.getElementById('generatedKey').style.display = 'none';
+}
+
+function copyPublicKey() {
+    const textarea = document.getElementById('publicKeyDisplay');
+    textarea.select();
+    document.execCommand('copy');
+    showNotification('Public key copied to clipboard!', 'success');
+}
+
+// Add to Agent Modal Functions
+function showAddToAgentModal(keyPath) {
+    const modal = document.getElementById('addToAgentModal');
+    const keyPathInput = document.getElementById('keyPath');
+    const passphraseInput = document.getElementById('passphrase');
+    
+    keyPathInput.value = keyPath;
+    passphraseInput.value = ''; // Clear previous passphrase
+    modal.style.display = 'block';
+}
+
+function closeAddToAgentModal() {
+    document.getElementById('addToAgentModal').style.display = 'none';
+}
+
+async function addKeyToAgent() {
+    const keyPath = document.getElementById('keyPath').value;
+    const passphrase = document.getElementById('passphrase').value;
+    const submitBtn = document.getElementById('addToAgentBtn');
+    const loadingText = document.getElementById('addToAgentLoading');
+    
+    submitBtn.disabled = true;
+    loadingText.style.display = 'inline';
+    
+    try {
+        const response = await fetch('/api/v1/ssh/add-to-agent', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                key_path: keyPath,
+                passphrase: passphrase || undefined
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.error || 'Failed to add key to agent');
+        }
+        
+        showNotification('Key added to SSH agent successfully', 'success');
+        closeAddToAgentModal();
+    } catch (error) {
+        showNotification(error.message, 'error');
+    } finally {
+        submitBtn.disabled = false;
+        loadingText.style.display = 'none';
+    }
+}
+
+// Form submission for key generation
+document.getElementById('generateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    
+    try {
+        const result = await fetch('/api/v1/ssh/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const response = await result.json();
+        
+        if (!result.ok) {
+            throw new Error(response.error || 'Failed to generate SSH key');
+        }
+        
+        // Show public key
+        document.getElementById('publicKeyDisplay').value = response.public_key;
+        document.getElementById('generatedKey').style.display = 'block';
+        
+        showNotification('SSH key generated successfully!', 'success');
+        
+        // Reload the keys list if it exists
+        if (typeof loadSSHKeys === 'function') {
+            loadSSHKeys();
+        }
+    } catch (error) {
+        showNotification(error.message, 'error');
+    }
+});
+
+// Initialize when document is ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Load SSH keys if on the SSH keys page
+    if (document.getElementById('ssh-keys-table')) {
+        loadSSHKeys();
+    }
+});
+</script>
+{% endblock %}

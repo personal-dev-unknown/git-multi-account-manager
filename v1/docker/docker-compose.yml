@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  build-linux:
+    build:
+      context: .
+      dockerfile: Dockerfile.linux
+    volumes:
+      - ./dist:/app/dist
+    
+  build-windows:
+    image: python:3.13-windowsservercore
+    build:
+      context: .
+      dockerfile: Dockerfile.windows
+    volumes:
+      - type: bind
+        source: ./dist
+        target: C:\\app\\dist
+    platform: windows/amd64
+
+  build-macos:
+    build:
+      context: .
+      dockerfile: Dockerfile.macos
+    volumes:
+      - ./dist:/app/dist
+    platform: linux/amd64  # Note: This won't actually run macOS, but can be used for cross-compilation
+
+volumes:
+  dist:

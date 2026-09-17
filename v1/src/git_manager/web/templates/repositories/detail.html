@@ -1,0 +1,124 @@
+<!-- src/git_manager/web/templates/repositories/detail.html -->
+{% extends "base.html" %}
+
+{% block title %}Repository Details - Git Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 id="repo-name">Repository</h2>
+        <div style="float: right;">
+            <button class="btn btn-primary" onclick="pullChanges()">Pull</button>
+            <button class="btn btn-success" onclick="pushChanges()">Push</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="detail-grid">
+            <div class="detail-item">
+                <label>Path:</label>
+                <span id="path"></span>
+            </div>
+            <div class="detail-item">
+                <label>Branch:</label>
+                <span id="branch"></span>
+            </div>
+            <div class="detail-item">
+                <label>Account:</label>
+                <span id="account"></span>
+            </div>
+            <div class="detail-item">
+                <label>Remote URL:</label>
+                <span id="remote-url"></span>
+            </div>
+        </div>
+
+        <div id="status-section" style="margin-top: 30px;">
+            <h3>Status</h3>
+            <div id="status-content">
+                <button class="btn btn-secondary" onclick="checkStatus()">Check Status</button>
+            </div>
+        </div>
+
+        <div id="operation-result" class="alert" style="display: none; margin-top: 20px;"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const repoPath = new URLSearchParams(window.location.search).get('path');
+
+async function checkStatus() {
+    const statusContent = document.getElementById('status-content');
+    statusContent.innerHTML = '<div class="spinner"></div><p>Checking status...</p>';
+    
+    try {
+        const status = await apiRequest(`/api/v1/repositories/status?path=${encodeURIComponent(repoPath)}`);
+        
+        let html = '<div class="status-info">';
+        html += `<p><strong>Branch:</strong> ${status.branch}</p>`;
+        html += `<p><strong>Clean:</strong> ${status.is_clean ? '✓ Yes' : '✗ No'}</p>`;
+        html += `<p><strong>Synced:</strong> ${status.is_synced ? '✓ Yes' : '✗ No'}</p>`;
+        
+        if (status.commits_ahead > 0) {
+            html += `<p class="warning">↑ ${status.commits_ahead} commits ahead</p>`;
+        }
+        if (status.commits_behind > 0) {
+            html += `<p class="warning">↓ ${status.commits_behind} commits behind</p>`;
+        }
+        
+        if (!status.is_clean) {
+            html += '<p><strong>Uncommitted files:</strong></p><ul>';
+            status.uncommitted_files.forEach(file => {
+                html += `<li>${file}</li>`;
+            });
+            html += '</ul>';
+        }
+        
+        html += '</div>';
+        statusContent.innerHTML = html;
+    } catch (error) {
+        statusContent.innerHTML = '<p class="alert alert-error">Error checking status</p>';
+    }
+}
+
+async function pullChanges() {
+    showResult('Pulling changes...', 'info');
+    
+    try {
+        const result = await apiRequest('/api/v1/repositories/pull', 'POST', { path: repoPath });
+        if (result.success) {
+            showResult('✓ Pull successful!', 'success');
+            checkStatus();
+        } else {
+            showResult('✗ Pull failed: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showResult('✗ Error: ' + error.message, 'error');
+    }
+}
+
+async function pushChanges() {
+    showResult('Pushing changes...', 'info');
+    
+    try {
+        const result = await apiRequest('/api/v1/repositories/push', 'POST', { path: repoPath });
+        if (result.success) {
+            showResult('✓ Push successful!', 'success');
+            checkStatus();
+        } else {
+            showResult('✗ Push failed: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showResult('✗ Error: ' + error.message, 'error');
+    }
+}
+
+function showResult(message, type) {
+    const resultDiv = document.getElementById('operation-result');
+    resultDiv.style.display = 'block';
+    resultDiv.className = `alert alert-${type}`;
+    resultDiv.textContent = message;
+}
+</script>
+{% endblock %}

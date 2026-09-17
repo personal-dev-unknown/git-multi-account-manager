@@ -1,0 +1,100 @@
+<!-- src/git_manager/web/templates/repositories/list.html -->
+{% extends "base.html" %}
+
+{% block title %}Repositories - Git Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Repositories</h2>
+        <button class="btn btn-primary" onclick="showCloneModal()">Clone Repository</button>
+    </div>
+    <div class="card-body">
+        <div id="clone-progress"></div>
+        
+        <table class="table" id="repositories-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Path</th>
+                    <th>Account</th>
+                    <th>Branch</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Clone Modal -->
+<div id="cloneModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Clone Repository</h3>
+            <span class="close" onclick="closeCloneModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="cloneForm">
+                <div class="form-group">
+                    <label>Repository URL:</label>
+                    <input type="text" class="form-control" name="url" required 
+                           placeholder="https://github.com/user/repo">
+                </div>
+                <div class="form-group">
+                    <label>Account:</label>
+                    <select class="form-control" name="account" id="cloneAccountSelect" required>
+                        <!-- Populated by JavaScript -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Destination (optional):</label>
+                    <input type="text" class="form-control" name="destination">
+                </div>
+                <div class="form-group">
+                    <label>Branch (optional):</label>
+                    <input type="text" class="form-control" name="branch" placeholder="main">
+                </div>
+                <button type="submit" class="btn btn-success">Clone</button>
+                <button type="button" class="btn btn-secondary" onclick="closeCloneModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function showCloneModal() {
+    // Load accounts for selection
+    const accounts = await apiRequest('/api/v1/accounts');
+    const select = document.getElementById('cloneAccountSelect');
+    select.innerHTML = accounts.map(acc => 
+        `<option value="${acc.name}">${acc.name} (${acc.platform})</option>`
+    ).join('');
+    
+    document.getElementById('cloneModal').style.display = 'block';
+}
+
+function closeCloneModal() {
+    document.getElementById('cloneModal').style.display = 'none';
+}
+
+document.getElementById('cloneForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    
+    try {
+        await apiRequest('/api/v1/repositories/clone', 'POST', data);
+        closeCloneModal();
+        showNotification('Repository cloned successfully!', 'success');
+    } catch (error) {
+        showNotification('Failed to clone repository', 'error');
+    }
+});
+</script>
+{% endblock %}

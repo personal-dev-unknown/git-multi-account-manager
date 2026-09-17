@@ -1,0 +1,131 @@
+<!-- src/git_manager/web/templates/ssh/keys.html -->
+{% extends "base.html" %}
+
+{% block title %}SSH Keys - Git Manager{% endblock %}
+
+{% block extra_js %}
+    <script src="{{ url_for('static', filename='js/ssh.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2>SSH Keys</h2>
+        <div>
+            <button class="btn btn-primary" onclick="showGenerateModal()">
+                <i class="fas fa-key"></i> Generate New Key
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="ssh-keys-table">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Path</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Populated by JavaScript -->
+                    <tr>
+                        <td colspan="5" class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            Loading SSH keys...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Generate Key Modal -->
+<div id="generateModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Generate SSH Key</h3>
+            <span class="close" onclick="closeGenerateModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="generateForm">
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" class="form-control" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Key Name:</label>
+                    <input type="text" class="form-control" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Key Type:</label>
+                    <select class="form-control" name="type">
+                        <option value="ed25519">ED25519 (Recommended)</option>
+                        <option value="rsa">RSA</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Passphrase (optional):</label>
+                    <input type="password" class="form-control" name="passphrase">
+                </div>
+                <button type="submit" class="btn btn-success">Generate</button>
+                <button type="button" class="btn btn-secondary" onclick="closeGenerateModal()">Cancel</button>
+            </form>
+            
+            <div id="generatedKey" style="display: none; margin-top: 20px;">
+                <h4>Public Key (add to GitHub/GitLab):</h4>
+                <textarea id="publicKeyDisplay" class="form-control" rows="3" readonly></textarea>
+                <button class="btn btn-primary" onclick="copyPublicKey()">Copy</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showGenerateModal() {
+    document.getElementById('generateModal').style.display = 'block';
+}
+
+function closeGenerateModal() {
+    document.getElementById('generateModal').style.display = 'none';
+    document.getElementById('generatedKey').style.display = 'none';
+}
+
+function copyPublicKey() {
+    const textarea = document.getElementById('publicKeyDisplay');
+    textarea.select();
+    document.execCommand('copy');
+    showNotification('Public key copied to clipboard!', 'success');
+}
+
+document.getElementById('generateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    
+    try {
+        const result = await apiRequest('/api/v1/ssh/generate', 'POST', data);
+        
+        // Show public key
+        document.getElementById('publicKeyDisplay').value = result.public_key;
+        document.getElementById('generatedKey').style.display = 'block';
+        
+        showNotification('SSH key generated successfully!', 'success');
+        
+        // Reload the keys list if it exists
+        if (typeof loadSSHKeys === 'function') {
+            loadSSHKeys();
+        }
+    } catch (error) {
+        showNotification('Failed to generate SSH key', 'error');
+    }
+});
+</script>
+{% endblock %}

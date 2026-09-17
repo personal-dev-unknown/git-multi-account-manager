@@ -1,0 +1,127 @@
+<!-- src/git_manager/web/templates/ssh/generate.html -->
+{% extends "base.html" %}
+
+{% block title %}Generate SSH Key - Git Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Generate SSH Key</h2>
+    </div>
+    <div class="card-body">
+        <form id="generateForm">
+            <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" class="form-control" id="email" name="email" required
+                       placeholder="your.email@example.com">
+                <small>Used as comment in the SSH key</small>
+            </div>
+
+            <div class="form-group">
+                <label for="name">Key Name *</label>
+                <input type="text" class="form-control" id="name" name="name" required
+                       placeholder="work-key">
+                <small>Unique name for this key (e.g., work-key, personal-key)</small>
+            </div>
+
+            <div class="form-group">
+                <label for="type">Key Type</label>
+                <select class="form-control" id="type" name="type">
+                    <option value="ed25519" selected>ED25519 (Recommended - Faster & More Secure)</option>
+                    <option value="rsa">RSA (Traditional - 4096 bits)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="passphrase">Passphrase (Optional but Recommended)</label>
+                <input type="password" class="form-control" id="passphrase" name="passphrase"
+                       placeholder="Leave empty for no passphrase">
+                <small>Adds extra security layer</small>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Generate Key</button>
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/ssh'">
+                    Cancel
+                </button>
+            </div>
+        </form>
+
+        <div id="generation-result" style="display: none; margin-top: 30px;">
+            <h3>Key Generated Successfully!</h3>
+            
+            <div class="alert alert-success">
+                ✓ SSH key has been generated and saved
+            </div>
+
+            <div class="form-group">
+                <label>Private Key Path:</label>
+                <input type="text" class="form-control" id="private-key-path" readonly>
+            </div>
+
+            <div class="form-group">
+                <label>Public Key (Copy this to GitHub/GitLab):</label>
+                <textarea id="public-key" class="form-control" rows="4" readonly></textarea>
+                <button class="btn btn-primary" onclick="copyPublicKey()" style="margin-top: 10px;">
+                    Copy to Clipboard
+                </button>
+            </div>
+
+            <div class="next-steps">
+                <h4>Next Steps:</h4>
+                <ol>
+                    <li>Copy the public key above</li>
+                    <li>Go to your platform settings:
+                        <ul>
+                            <li><strong>GitHub:</strong> Settings → SSH and GPG keys → New SSH key</li>
+                            <li><strong>GitLab:</strong> User Settings → SSH Keys → Add new key</li>
+                        </ul>
+                    </li>
+                    <li>Paste the public key and save</li>
+                    <li><a href="/accounts?action=add">Add a new account</a> using this key</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('generateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    
+    // Remove empty passphrase
+    if (!data.passphrase) {
+        delete data.passphrase;
+    }
+    
+    try {
+        const result = await apiRequest('/api/v1/ssh/generate', 'POST', data);
+        
+        // Hide form
+        e.target.style.display = 'none';
+        
+        // Show result
+        const resultDiv = document.getElementById('generation-result');
+        resultDiv.style.display = 'block';
+        
+        document.getElementById('private-key-path').value = result.private_key_path;
+        document.getElementById('public-key').value = result.public_key;
+        
+        showNotification('SSH key generated successfully!', 'success');
+    } catch (error) {
+        showNotification('Failed to generate SSH key: ' + error.message, 'error');
+    }
+});
+
+function copyPublicKey() {
+    const textarea = document.getElementById('public-key');
+    textarea.select();
+    document.execCommand('copy');
+    showNotification('Public key copied to clipboard!', 'success');
+}
+</script>
+{% endblock %}

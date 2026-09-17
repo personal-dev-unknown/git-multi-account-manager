@@ -1,0 +1,144 @@
+# src/git_manager/desktop/resources/styles/main.qss
+"""Qt stylesheet for desktop application."""
+
+QSS_CONTENT = """
+/* Main Window */
+QMainWindow {
+    background-color: #4A4A4A;
+}
+
+/* Headers */
+QLabel#header {
+    background-color: #1B4332;
+    color: #F5F5F5;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 10px;
+}
+
+/* Tables */
+QTableWidget {
+    background-color: #2A2A2A;
+    color: #F5F5F5;
+    gridline-color: #6B4423;
+    selection-background-color: #2D6A6A;
+}
+
+QTableWidget::item:selected {
+    background-color: #2D6A6A;
+}
+
+QHeaderView::section {
+    background-color: #1B4332;
+    color: #F5F5F5;
+    padding: 5px;
+    border: 1px solid #6B4423;
+}
+
+/* Buttons */
+QPushButton {
+    background-color: #1B4332;
+    color: #F5F5F5;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+QPushButton:hover {
+    background-color: #2D6A6A;
+}
+
+QPushButton:pressed {
+    background-color: #9A5324;
+}
+
+QPushButton:disabled {
+    background-color: #666666;
+    color: #999999;
+}
+
+/* Input Fields */
+QLineEdit, QTextEdit, QComboBox {
+    background-color: #F5F5F5;
+    color: #2A2A2A;
+    border: 1px solid #6B4423;
+    border-radius: 4px;
+    padding: 5px;
+}
+
+QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
+    border: 2px solid #2D6A6A;
+}
+
+/* Tabs */
+QTabWidget::pane {
+    border: 1px solid #6B4423;
+    background-color: #2A2A2A;
+}
+
+QTabBar::tab {
+    background-color: #4A4A4A;
+    color: #F5F5F5;
+    padding: 8px 16px;
+    border: 1px solid #6B4423;
+}
+
+QTabBar::tab:selected {
+    background-color: #1B4332;
+}
+
+QTabBar::tab:hover {
+    background-color: #2D6A6A;
+}
+
+/* Scroll Bars */
+QScrollBar:vertical {
+    background-color: #2A2A2A;
+    width: 12px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #6B4423;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #9A5324;
+}
+
+/* Menu Bar */
+QMenuBar {
+    background-color: #1B4332;
+    color: #F5F5F5;
+}
+
+QMenuBar::item:selected {
+    background-color: #2D6A6A;
+}
+
+QMenu {
+    background-color: #2A2A2A;
+    color: #F5F5F5;
+    border: 1px solid #6B4423;
+}
+
+QMenu::item:selected {
+    background-color: #2D6A6A;
+}
+
+/* Status Bar */
+QStatusBar {
+    background-color: #1B4332;
+    color: #F5F5F5;
+}
+"""
+
+
+def get_stylesheet() -> str:
+    """Get the application stylesheet.
+    
+    Returns:
+        QSS stylesheet string
+    """
+    return QSS_CONTENT

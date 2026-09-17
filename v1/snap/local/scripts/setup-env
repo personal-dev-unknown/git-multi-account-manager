@@ -1,0 +1,187 @@
+#!/bin/bash
+# snap/local/scripts/setup-env
+# Environment setup script for Git Manager snap
+# This runs before each command execution
+
+set -e
+
+# ============================================
+# Environment Variables Setup
+# ============================================
+
+# Python environment
+export PYTHONPATH="${SNAP}/lib/python3.12/site-packages:${SNAP}/usr/lib/python3/dist-packages:${PYTHONPATH}"
+export PYTHONHOME="${SNAP}/usr"
+
+# Git Manager directories
+export GIT_MANAGER_CONFIG_DIR="${GIT_MANAGER_CONFIG_DIR:-${SNAP_USER_DATA}/.config/git-manager}"
+export GIT_MANAGER_DATA_DIR="${GIT_MANAGER_DATA_DIR:-${SNAP_USER_DATA}/.local/share/git-manager}"
+export GIT_MANAGER_CACHE_DIR="${GIT_MANAGER_CACHE_DIR:-${SNAP_USER_COMMON}/.cache/git-manager}"
+export GIT_MANAGER_LOG_DIR="${SNAP_USER_DATA}/.local/share/git-manager/logs"
+
+# System paths
+export PATH="${SNAP}/usr/bin:${SNAP}/bin:${PATH}"
+export LD_LIBRARY_PATH="${SNAP}/usr/lib:${SNAP}/lib:${LD_LIBRARY_PATH}"
+
+# SSH configuration
+export SSH_CONFIG_DIR="${HOME}/.ssh"
+export GIT_SSH_COMMAND="ssh -F ${SSH_CONFIG_DIR}/config"
+
+# Git configuration
+export GIT_CONFIG_GLOBAL="${HOME}/.gitconfig"
+
+# XDG Base Directory Specification
+export XDG_CONFIG_HOME="${SNAP_USER_DATA}/.config"
+export XDG_DATA_HOME="${SNAP_USER_DATA}/.local/share"
+export XDG_CACHE_HOME="${SNAP_USER_COMMON}/.cache"
+
+# Locale
+export LANG="${LANG:-C.UTF-8}"
+export LC_ALL="${LC_ALL:-C.UTF-8}"
+
+# ============================================
+# Directory Initialization
+# ============================================
+
+# Create necessary directories if they don't exist
+mkdir -p "${GIT_MANAGER_CONFIG_DIR}" 2>/dev/null || true
+mkdir -p "${GIT_MANAGER_DATA_DIR}" 2>/dev/null || true
+mkdir -p "${GIT_MANAGER_CACHE_DIR}" 2>/dev/null || true
+mkdir -p "${GIT_MANAGER_LOG_DIR}" 2>/dev/null || true
+
+# ============================================
+# First Run Setup
+# ============================================
+
+FIRST_RUN_FLAG="${GIT_MANAGER_CONFIG_DIR}/.initialized"
+
+if [ ! -f "${FIRST_RUN_FLAG}" ]; then
+    echo "🎉 First run detected - Initializing Git Manager..."
+    
+    # Copy example configurations if they don't exist
+    if [ -d "${SNAP}/etc/git-manager/config" ]; then
+        for example_file in "${SNAP}/etc/git-manager/config"/*.example.*; do
+            if [ -f "${example_file}" ]; then
+                filename=$(basename "${example_file}")
+                target="${GIT_MANAGER_CONFIG_DIR}/${filename}"
+                
+                if [ ! -f "${target}" ]; then
+                    cp "${example_file}" "${target}"
+                    echo "  • Created ${filename}"
+                fi
+            fi
+        done
+    fi
+    
+    # Create initial configuration
+    if [ ! -f "${GIT_MANAGER_CONFIG_DIR}/config.json" ]; then
+        cat > "${GIT_MANAGER_CONFIG_DIR}/config.json" << 'EOFCONFIG'
+{
+  "version": "2.1.0",
+  "accounts": [],
+  "current_account": null,
+  "ssh_config_path": "$HOME/.ssh/config",
+  "backup_enabled": true,
+  "backup_dir": "$HOME/.git-manager/backups",
+  "log_level": "INFO",
+  "auto_update_check": true
+}
+EOFCONFIG
+        echo "  • Created default configuration"
+    fi
+    
+    # Create accounts directory
+    mkdir -p "${GIT_MANAGER_DATA_DIR}/accounts"
+    mkdir -p "${GIT_MANAGER_DATA_DIR}/backups"
+    
+    # Mark as initialized
+    touch "${FIRST_RUN_FLAG}"
+    
+    echo "✅ Initialization complete!"
+    echo ""
+    echo "📝 Quick Start:"
+    echo "  1. Add an account: git-manager add-account"
+    echo "  2. List accounts: git-manager list"
+    echo "  3. Switch account: git-manager switch <account-name>"
+    echo "  4. Get help: git-manager --help"
+    echo ""
+fi
+
+# ============================================
+# Version Migration
+# ============================================
+
+# Check if configuration needs migration
+if [ -f "${GIT_MANAGER_CONFIG_DIR}/config.json" ]; then
+    CONFIG_VERSION=$(python3 -c "
+import json, sys
+try:
+    with open('${GIT_MANAGER_CONFIG_DIR}/config.json') as f:
+        config = json.load(f)
+        print(config.get('version', '1.0.0'))
+except:
+    print('1.0.0')
+" 2>/dev/null || echo "1.0.0")
+    
+    CURRENT_VERSION="2.1.0"
+    
+    if [ "${CONFIG_VERSION}" != "${CURRENT_VERSION}" ]; then
+        echo "📦 Configuration migration needed (${CONFIG_VERSION} → ${CURRENT_VERSION})"
+        # Migration would be handled by the application
+    fi
+fi
+
+# ============================================
+# Health Checks (only for interactive sessions)
+# ============================================
+
+if [ -t 1 ] && [ "${GIT_MANAGER_SKIP_HEALTH_CHECK}" != "true" ]; then
+    # Check if SSH directory exists
+    if [ ! -d "${SSH_CONFIG_DIR}" ]; then
+        echo "⚠️  Warning: SSH directory not found at ${SSH_CONFIG_DIR}"
+        echo "   Run: mkdir -p ~/.ssh && chmod 700 ~/.ssh"
+        echo ""
+    fi
+    
+    # Check if git is available
+    if ! command -v git &> /dev/null; then
+        echo "❌ Error: Git not found in PATH"
+        echo "   This is unexpected in a snap. Please report this issue."
+        echo ""
+    fi
+fi
+
+# ============================================
+# Logging Setup
+# ============================================
+
+# Rotate logs if they get too large (> 10MB)
+LOG_FILE="${GIT_MANAGER_LOG_DIR}/git-manager.log"
+if [ -f "${LOG_FILE}" ]; then
+    LOG_SIZE=$(stat -f%z "${LOG_FILE}" 2>/dev/null || stat -c%s "${LOG_FILE}" 2>/dev/null || echo 0)
+    if [ "${LOG_SIZE}" -gt 10485760 ]; then
+        # Keep last 3 rotations
+        [ -f "${LOG_FILE}.3" ] && rm "${LOG_FILE}.3"
+        [ -f "${LOG_FILE}.2" ] && mv "${LOG_FILE}.2" "${LOG_FILE}.3"
+        [ -f "${LOG_FILE}.1" ] && mv "${LOG_FILE}.1" "${LOG_FILE}.2"
+        mv "${LOG_FILE}" "${LOG_FILE}.1"
+    fi
+fi
+
+# ============================================
+# Debug Mode
+# ============================================
+
+if [ "${GIT_MANAGER_DEBUG}" = "true" ]; then
+    echo "🐛 Debug Mode Enabled"
+    echo "   SNAP: ${SNAP}"
+    echo "   SNAP_USER_DATA: ${SNAP_USER_DATA}"
+    echo "   CONFIG_DIR: ${GIT_MANAGER_CONFIG_DIR}"
+    echo "   DATA_DIR: ${GIT_MANAGER_DATA_DIR}"
+    echo "   PYTHONPATH: ${PYTHONPATH}"
+    echo ""
+    set -x
+fi
+
+# Execute the command
+exec "$@"

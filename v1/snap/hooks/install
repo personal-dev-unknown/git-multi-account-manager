@@ -1,0 +1,111 @@
+#!/bin/bash
+# snap/hooks/install
+# Installation hook for Git Manager snap
+
+set -e
+
+echo "Installing Git Manager..."
+
+# ============================================
+# Create directory structure
+# ============================================
+
+CONFIG_DIR="${SNAP_USER_DATA}/.config/git-manager"
+DATA_DIR="${SNAP_USER_DATA}/.local/share/git-manager"
+CACHE_DIR="${SNAP_USER_COMMON}/.cache/git-manager"
+
+mkdir -p "${CONFIG_DIR}"
+mkdir -p "${DATA_DIR}/accounts"
+mkdir -p "${DATA_DIR}/backups"
+mkdir -p "${DATA_DIR}/logs"
+mkdir -p "${CACHE_DIR}"
+
+# ============================================
+# Set up default configuration
+# ============================================
+
+if [ ! -f "${CONFIG_DIR}/config.json" ]; then
+    cat > "${CONFIG_DIR}/config.json" << 'EOFCONFIG'
+{
+  "version": "2.1.0",
+  "accounts": [],
+  "current_account": null,
+  "settings": {
+    "ssh_config_path": "$HOME/.ssh/config",
+    "backup_enabled": true,
+    "backup_dir": "$HOME/.git-manager/backups",
+    "log_level": "INFO",
+    "auto_update_check": true,
+    "editor": "$EDITOR",
+    "default_key_type": "ed25519"
+  },
+  "security": {
+    "encrypt_credentials": true,
+    "audit_logging": true
+  }
+}
+EOFCONFIG
+fi
+
+# ============================================
+# Copy example files
+# ============================================
+
+if [ -d "${SNAP}/etc/git-manager/config" ]; then
+    for example_file in "${SNAP}/etc/git-manager/config"/*.example.*; do
+        if [ -f "${example_file}" ]; then
+            filename=$(basename "${example_file}")
+            target="${CONFIG_DIR}/${filename}"
+            
+            if [ ! -f "${target}" ]; then
+                cp "${example_file}" "${target}" 2>/dev/null || true
+            fi
+        fi
+    done
+fi
+
+# ============================================
+# Set permissions
+# ============================================
+
+chmod 700 "${CONFIG_DIR}"
+chmod 700 "${DATA_DIR}"
+chmod 755 "${CACHE_DIR}"
+
+if [ -f "${CONFIG_DIR}/config.json" ]; then
+    chmod 600 "${CONFIG_DIR}/config.json"
+fi
+
+# ============================================
+# Create initial README
+# ============================================
+
+cat > "${DATA_DIR}/README.txt" << 'EOFREADME'
+Git Manager - Data Directory
+============================
+
+This directory contains your Git Manager data:
+
+accounts/  - Account configurations and SSH keys
+backups/   - Automatic backups of configurations
+logs/      - Application logs
+
+⚠️  IMPORTANT: Backup this directory regularly!
+
+For more information, visit:
+https://github.com/Zanabuni/git-multi-account-manager
+
+To backup your configuration:
+  git-manager backup export
+
+To restore from backup:
+  git-manager backup restore <backup-file>
+EOFREADME
+
+echo "✅ Git Manager installed successfully!"
+echo ""
+echo "📝 Next steps:"
+echo "  1. Run: git-manager --help"
+echo "  2. Add your first account: git-manager add-account"
+echo "  3. Check system: git-manager doctor"
+echo ""

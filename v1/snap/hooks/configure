@@ -1,0 +1,60 @@
+#!/bin/bash
+# snap/hooks/configure
+# Configuration hook for Git Manager snap
+
+set -e
+
+# Get configuration values from snapctl
+WEB_ENABLED=$(snapctl get web.enabled 2>/dev/null || echo "false")
+WEB_PORT=$(snapctl get web.port 2>/dev/null || echo "8080")
+DAEMON_ENABLED=$(snapctl get daemon.enabled 2>/dev/null || echo "false")
+LOG_LEVEL=$(snapctl get log-level 2>/dev/null || echo "INFO")
+
+# Update configuration file
+CONFIG_DIR="${SNAP_USER_DATA}/.config/git-manager"
+CONFIG_FILE="${CONFIG_DIR}/config.json"
+
+if [ -f "${CONFIG_FILE}" ]; then
+    # Use Python to update JSON configuration
+    python3 << EOFPYTHON
+import json
+import os
+
+config_file = os.path.expandvars("${CONFIG_FILE}")
+
+try:
+    with open(config_file, 'r') as f:
+        config = json.load(f)
+    
+    # Update settings
+    if 'settings' not in config:
+        config['settings'] = {}
+    
+    config['settings']['log_level'] = "${LOG_LEVEL}"
+    
+    # Save updated configuration
+    with open(config_file, 'w') as f:
+        json.dump(config, f, indent=2)
+    
+    print("✅ Configuration updated")
+except Exception as e:
+    print(f"⚠️  Warning: Could not update configuration: {e}")
+EOFPYTHON
+fi
+
+# Control services based on configuration
+if [ "${WEB_ENABLED}" = "true" ]; then
+    echo "🌐 Enabling web interface on port ${WEB_PORT}..."
+    snapctl start --enable git-manager.web 2>/dev/null || true
+else
+    snapctl stop --disable git-manager.web 2>/dev/null || true
+fi
+
+if [ "${DAEMON_ENABLED}" = "true" ]; then
+    echo "🔄 Enabling background daemon..."
+    snapctl start --enable git-manager.daemon 2>/dev/null || true
+else
+    snapctl stop --disable git-manager.daemon 2>/dev/null || true
+fi
+
+echo "✅ Configuration applied"

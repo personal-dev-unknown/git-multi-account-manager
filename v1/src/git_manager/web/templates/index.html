@@ -1,0 +1,72 @@
+<!-- src/git_manager/web/templates/index.html -->
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Git Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Welcome to Git Manager</h2>
+    </div>
+    <div class="card-body">
+        <p>Manage your multiple Git accounts with ease.</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px;">
+            <div class="card" style="text-align: center;">
+                <h3>Accounts</h3>
+                <p id="account-count">Loading...</p>
+                <a href="/accounts" class="btn btn-primary">Manage</a>
+            </div>
+            
+            <div class="card" style="text-align: center;">
+                <h3>Repositories</h3>
+                <p id="repo-count">0</p>
+                <a href="/repositories" class="btn btn-primary">Browse</a>
+            </div>
+            
+            <div class="card" style="text-align: center;">
+                <h3>SSH Keys</h3>
+                <p id="key-count">0</p>
+                <a href="/ssh" class="btn btn-primary">Manage</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Quick Actions</h2>
+    </div>
+    <div class="card-body">
+        <button class="btn btn-success" onclick="window.location.href='/repositories#clone'">
+            Clone Repository
+        </button>
+        <button class="btn btn-secondary" onclick="window.location.href='/ssh#generate'">
+            Generate SSH Key
+        </button>
+        <button class="btn btn-primary" onclick="testConnections()">
+            Test All Connections
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadDashboardStats() {
+    try {
+        const accounts = await apiRequest('/api/v1/accounts');
+        document.getElementById('account-count').textContent = accounts.length;
+    } catch (error) {
+        document.getElementById('account-count').textContent = 'Error';
+    }
+}
+
+async function testConnections() {
+    showNotification('Testing all connections...', 'info');
+    // Implementation
+}
+
+document.addEventListener('DOMContentLoaded', loadDashboardStats);
+</script>
+{% endblock %}

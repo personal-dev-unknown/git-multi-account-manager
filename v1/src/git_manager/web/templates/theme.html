@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Settings - Git Multi-Account Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+
+        .current-theme {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .current-theme h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .theme-info {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .theme-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .theme-info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .theme-info-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .theme-info-value {
+            color: #333;
+        }
+
+        .color-preview {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .color-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .themes-grid {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .themes-grid h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .theme-category {
+            margin-bottom: 30px;
+        }
+
+        .theme-category h3 {
+            color: #667eea;
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .theme-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .theme-item {
+            background: #f9f9f9;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .theme-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .theme-item.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .theme-item-name {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .theme-item-type {
+            font-size: 12px;
+            opacity: 0.7;
+            text-transform: capitalize;
+        }
+
+        .theme-item.active .theme-item-type {
+            opacity: 0.9;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .theme-list {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Theme Settings</h1>
+            <p>Customize the appearance of Git Multi-Account Manager</p>
+        </div>
+
+        <div id="message-container"></div>
+
+        <div class="content">
+            <!-- Current Theme Info -->
+            <div class="current-theme">
+                <h2>Current Theme</h2>
+                <div id="current-theme-info" class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading theme...</p>
+                </div>
+            </div>
+
+            <!-- Available Themes -->
+            <div class="themes-grid">
+                <h2>Available Themes</h2>
+                <div id="themes-container" class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading themes...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Color name to RGB conversion
+        const colorMap = {
+            'black': '#000000',
+            'white': '#FFFFFF',
+            'bright_white': '#FFFFFF',
+            'bright_black': '#808080',
+            'red': '#CD3131',
+            'bright_red': '#FF5555',
+            'green': '#13A10E',
+            'bright_green': '#55FF55',
+            'yellow': '#E5E510',
+            'bright_yellow': '#FFFF55',
+            'blue': '#2472C8',
+            'bright_blue': '#5555FF',
+            'magenta': '#BC3F3C',
+            'bright_magenta': '#FF55FF',
+            'cyan': '#11A8CD',
+            'bright_cyan': '#55FFFF',
+            'grey0': '#000000',
+            'grey100': '#FFFFFF',
+        };
+
+        function rgbToHex(rgbStr) {
+            const match = rgbStr.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+            if (match) {
+                const r = parseInt(match[1]).toString(16).padStart(2, '0');
+                const g = parseInt(match[2]).toString(16).padStart(2, '0');
+                const b = parseInt(match[3]).toString(16).padStart(2, '0');
+                return `#${r}${g}${b}`;
+            }
+            return colorMap[rgbStr] || '#CCCCCC';
+        }
+
+        function getColorHex(colorName) {
+            if (colorName.startsWith('rgb(')) {
+                return rgbToHex(colorName);
+            }
+            return colorMap[colorName] || '#CCCCCC';
+        }
+
+        async function loadCurrentTheme() {
+            try {
+                const response = await fetch('/api/v1/theme/current');
+                const theme = await response.json();
+
+                const html = `
+                    <div class="theme-info">
+                        <div class="theme-info-row">
+                            <span class="theme-info-label">Name:</span>
+                            <span class="theme-info-value">${theme.name}</span>
+                        </div>
+                        <div class="theme-info-row">
+                            <span class="theme-info-label">Type:</span>
+                            <span class="theme-info-value">${theme.type.charAt(0).toUpperCase() + theme.type.slice(1)}</span>
+                        </div>
+                    </div>
+                    <div class="color-preview">
+                        <div class="color-box">
+                            <div class="color-swatch" style="background: ${getColorHex(theme.colors.primary)}"></div>
+                            <span>Primary</span>
+                        </div>
+                        <div class="color-box">
+                            <div class="color-swatch" style="background: ${getColorHex(theme.colors.accent)}"></div>
+                            <span>Accent</span>
+                        </div>
+                        <div class="color-box">
+                            <div class="color-swatch" style="background: ${getColorHex(theme.colors.success)}"></div>
+                            <span>Success</span>
+                        </div>
+                        <div class="color-box">
+                            <div class="color-swatch" style="background: ${getColorHex(theme.colors.error)}"></div>
+                            <span>Error</span>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('current-theme-info').innerHTML = html;
+            } catch (error) {
+                document.getElementById('current-theme-info').innerHTML = 
+                    '<p style="color: red;">Failed to load current theme</p>';
+                console.error('Error loading current theme:', error);
+            }
+        }
+
+        async function loadThemes() {
+            try {
+                const response = await fetch('/api/v1/theme/list');
+                const themes = await response.json();
+
+                const currentResponse = await fetch('/api/v1/theme/current');
+                const currentTheme = await currentResponse.json();
+
+                let html = '';
+
+                for (const [type, themeList] of Object.entries(themes)) {
+                    const typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
+                    html += `<div class="theme-category">
+                        <h3>${typeLabel} Themes</h3>
+                        <div class="theme-list">`;
+
+                    for (const themeName of themeList) {
+                        const isActive = themeName === currentTheme.name.toLowerCase().replace(/\s+/g, '_');
+                        const displayName = themeName.replace(/_/g, ' ').split(' ')
+                            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                            .join(' ');
+
+                        html += `
+                            <div class="theme-item ${isActive ? 'active' : ''}" 
+                                 onclick="setTheme('${themeName}')" 
+                                 title="Click to apply ${displayName} theme">
+                                <div class="theme-item-name">${displayName}</div>
+                                <div class="theme-item-type">${type}</div>
+                            </div>
+                        `;
+                    }
+
+                    html += `</div></div>`;
+                }
+
+                document.getElementById('themes-container').innerHTML = html;
+            } catch (error) {
+                document.getElementById('themes-container').innerHTML = 
+                    '<p style="color: red;">Failed to load themes</p>';
+                console.error('Error loading themes:', error);
+            }
+        }
+
+        async function setTheme(themeName) {
+            try {
+                const response = await fetch('/api/v1/theme/set', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ theme: themeName })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(`✓ ${data.message}`, 'success');
+                    // Reload themes to update active state
+                    await loadThemes();
+                    await loadCurrentTheme();
+                } else {
+                    showMessage(`✗ ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to change theme', 'error');
+                console.error('Error setting theme:', error);
+            }
+        }
+
+        function showMessage(message, type) {
+            const container = document.getElementById('message-container');
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${type}`;
+            messageEl.textContent = message;
+            container.innerHTML = '';
+            container.appendChild(messageEl);
+
+            setTimeout(() => {
+                messageEl.remove();
+            }, 5000);
+        }
+
+        // Load themes on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCurrentTheme();
+            loadThemes();
+        });
+    </script>
+</body>
+</html>

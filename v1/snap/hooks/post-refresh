@@ -1,0 +1,163 @@
+#!/bin/bash
+# snap/hooks/post-refresh
+# Post-refresh hook for Git Manager snap
+
+set -e
+
+echo "Updating Git Manager..."
+
+CONFIG_DIR="${SNAP_USER_DATA}/.config/git-manager"
+DATA_DIR="${SNAP_USER_DATA}/.local/share/git-manager"
+BACKUP_DIR="${DATA_DIR}/backups"
+
+# ============================================
+# Backup existing configuration
+# ============================================
+
+BACKUP_FILE="${BACKUP_DIR}/pre-refresh-$(date +%Y%m%d-%H%M%S).tar.gz"
+
+if [ -d "${CONFIG_DIR}" ]; then
+    echo "📦 Creating backup before upgrade..."
+    mkdir -p "${BACKUP_DIR}"
+    
+    tar -czf "${BACKUP_FILE}" \
+        -C "${SNAP_USER_DATA}" \
+        ".config/git-manager" \
+        ".local/share/git-manager" \
+        2>/dev/null || true
+    
+    if [ -f "${BACKUP_FILE}" ]; then
+        echo "✅ Backup created: ${BACKUP_FILE}"
+    fi
+fi
+
+# ============================================
+# Migration logic
+# ============================================
+
+CONFIG_FILE="${CONFIG_DIR}/config.json"
+
+if [ -f "${CONFIG_FILE}" ]; then
+    echo "🔄 Checking for configuration migrations..."
+    
+    python3 << 'EOFMIGRATE'
+import json
+import os
+import sys
+
+config_file = os.path.expandvars("${CONFIG_FILE}")
+
+try:
+    with open(config_file, 'r') as f:
+        config = json.load(f)
+    
+    current_version = config.get('version', '1.0.0')
+    target_version = '2.1.0'
+    
+    if current_version != target_version:
+        print(f"📊 Migrating configuration from {current_version} to {target_version}...")
+        
+        # Perform migrations
+        migrations_applied = []
+        
+        # Example migration: Add new settings
+        if 'settings' not in config:
+            config['settings'] = {
+                "ssh_config_path": "$HOME/.ssh/config",
+                "backup_enabled": True,
+                "log_level": "INFO"
+            }
+            migrations_applied.append("Added settings section")
+        
+        # Update version
+        config['version'] = target_version
+        
+        # Save updated configuration
+        with open(config_file, 'w') as f:
+            json.dump(config, f, indent=2)
+        
+        print(f"✅ Applied {len(migrations_applied)} migration(s)")
+        for migration in migrations_applied:
+            print(f"  • {migration}")
+    else:
+        print("✅ Configuration is up to date")
+        
+except Exception as e:
+    print(f"⚠️  Warning: Migration failed: {e}", file=sys.stderr)
+    print("   Your previous configuration has been backed up.", file=sys.stderr)
+    sys.exit(1)
+EOFMIGRATE
+fi
+
+# ============================================
+# Cleanup old backups
+# ============================================
+
+if [ -d "${BACKUP_DIR}" ]; then
+    # Keep only last 10 backups
+    BACKUP_COUNT=$(find "${BACKUP_DIR}" -name "pre-refresh-*.tar.gz" | wc -l)
+    
+    if [ "${BACKUP_COUNT}" -gt 10 ]; then
+        echo "🧹 Cleaning old backups (keeping last 10)..."
+        find "${BACKUP_DIR}" -name "pre-refresh-*.tar.gz" -type f | \
+            sort | \
+            head -n -10 | \
+            xargs rm -f 2>/dev/null || true
+    fi
+fi
+
+# ============================================
+# Restart services
+# ============================================
+
+# Restart services if they were running
+if snapctl services git-manager.web | grep -q "active"; then
+    echo "🔄 Restarting web interface..."
+    snapctl restart git-manager.web 2>/dev/null || true
+fi
+
+if snapctl services git-manager.daemon | grep -q "active"; then
+    echo "🔄 Restarting daemon..."
+    snapctl restart git-manager.daemon 2>/dev/null || true
+fi
+
+echo "✅ Git Manager updated successfully!"
+echo ""
+echo "📝 What's new in v2.1.0:"
+echo "  • Enhanced SSH key management"
+echo "  • Improved performance"
+echo "  • New configuration validation"
+echo "  • Better error reporting"
+echo ""
+echo "Run 'git-manager --version' to verify installation"
+echo ""
+
+# ============================================
+# Remove Hook
+# ============================================
+
+#!/bin/bash
+# snap/hooks/remove
+# Remove hook for Git Manager snap
+
+set -e
+
+CONFIG_DIR="${SNAP_USER_DATA}/.config/git-manager"
+DATA_DIR="${SNAP_USER_DATA}/.local/share/git-manager"
+
+echo "Removing Git Manager..."
+echo ""
+echo "⚠️  Your data is preserved at:"
+echo "   ${CONFIG_DIR}"
+echo "   ${DATA_DIR}"
+echo ""
+echo "To completely remove all data:"
+echo "   rm -rf ${CONFIG_DIR}"
+echo "   rm -rf ${DATA_DIR}"
+echo ""
+echo "To backup before removal:"
+echo "   tar -czf ~/git-manager-backup-$(date +%Y%m%d).tar.gz \\"
+echo "     ${CONFIG_DIR} ${DATA_DIR}"
+echo ""
+echo "Remove hook completed."
+exit 0

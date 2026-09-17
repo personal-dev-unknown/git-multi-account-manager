@@ -1,0 +1,60 @@
+{
+  "version": "1.0.0",
+  "application": {
+    "name": "Git Multi-Account Manager",
+    "debug": false
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "~/.git-manager/git-manager.log",
+    "max_size": 10485760,
+    "backup_count": 5
+  },
+  "ssh": {
+    "directory": "~/.ssh",
+    "config_file": "~/.ssh/config",
+    "key_type": "ed25519",
+    "key_bits": 4096,
+    "auto_add_to_agent": true
+  },
+  "git": {
+    "default_branch": "main",
+    "default_remote": "origin",
+    "auto_fetch": true,
+    "auto_pull": false,
+    "verify_ssl": true
+  },
+  "ui": {
+    "theme": "dark",
+    "color_scheme": {
+      "primary": "#1B4332",
+      "secondary": "#9A5324",
+      "accent": "#2D6A6A",
+      "text": "#6B4423",
+      "background": "#4A4A4A",
+      "success": "#2D6A6A",
+      "warning": "#9A5324",
+      "error": "#8B0000"
+    },
+    "table_style": "rounded",
+    "show_progress": true
+  },
+  "web": {
+    "host": "0.0.0.0",
+    "port": 5000,
+    "secret_key": "change-this-in-production",
+    "debug": false,
+    "threaded": true
+  },
+  "desktop": {
+    "window_width": 1000,
+    "window_height": 700,
+    "system_tray": true,
+    "start_minimized": false
+  },
+  "features": {
+    "auto_update_check": true,
+    "analytics": false,
+    "crash_reporting": false
+  }
+}
